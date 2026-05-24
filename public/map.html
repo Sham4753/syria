@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#007A3D">
+    <title>الخريطة - سوريا الإلكترونية</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <style>
+        :root { --primary: #007A3D; --bg: #F0F4F0; --text: #1A1A1A; --radius: 14px; --font: 'Segoe UI', 'Noto Sans Arabic', Tahoma, sans-serif; }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family: var(--font); background: var(--bg); color: var(--text); direction: rtl; padding: 15px; max-width: 520px; margin: 0 auto; }
+        a { text-decoration:none; color:inherit; }
+        .glass { background: rgba(255,255,255,0.7); backdrop-filter: blur(10px); border-radius: var(--radius); box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+        .header { display: flex; align-items: center; gap: 12px; padding: 10px 0 15px; }
+        .back-btn { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; cursor: pointer; }
+        .page-title { font-size: 20px; font-weight: 700; }
+        .map-container { height: 400px; border-radius: var(--radius); overflow: hidden; margin-bottom: 15px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="/" class="back-btn glass">←</a>
+        <div class="page-title">🗺️ الخريطة</div>
+    </div>
+    <div class="map-container" id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        var map = L.map('map').setView([34.8, 38.5], 7);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution: '', maxZoom: 18}).addTo(map);
+
+        var cities = [
+            { name: 'دمشق', lat: 33.5138, lng: 36.2765, id: 1 },{ name: 'حلب', lat: 36.2021, lng: 37.1343, id: 2 },
+            { name: 'حمص', lat: 34.7324, lng: 36.7137, id: 3 },{ name: 'اللاذقية', lat: 35.5214, lng: 35.7924, id: 4 },
+            { name: 'حماة', lat: 35.1318, lng: 36.7578, id: 5 },{ name: 'طرطوس', lat: 34.8912, lng: 35.8867, id: 6 }
+        ];
+        cities.forEach(function(c) {
+            L.marker([c.lat, c.lng]).addTo(map).bindPopup('<a href="/governorate.html?id=' + c.id + '">' + c.name + '</a>');
+        });
+
+        setTimeout(function() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(pos) {
+                    var userIcon = L.divIcon({
+                        html: '<div style="background:#007A3D;width:18px;height:18px;border-radius:50%;border:3px solid white;box-shadow:0 0 16px rgba(0,122,61,0.6);"></div>',
+                        iconSize: [18, 18], className: ''
+                    });
+                    L.marker([pos.coords.latitude, pos.coords.longitude], {icon: userIcon})
+                        .addTo(map).bindPopup('📍 أنت هنا').openPopup();
+                    map.setView([pos.coords.latitude, pos.coords.longitude], 13);
+                });
+            }
+        }, 1000);
+window.onload = function() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(pos) {
+            var userIcon = L.divIcon({
+                html: '<div style="background:#007A3D;width:18px;height:18px;border-radius:50%;border:3px solid white;box-shadow:0 0 16px rgba(0,122,61,0.6);"></div>',
+                iconSize: [18, 18], className: ''
+            });
+            L.marker([pos.coords.latitude, pos.coords.longitude], {icon: userIcon})
+                .addTo(map).bindPopup('📍 أنت هنا').openPopup();
+            map.setView([pos.coords.latitude, pos.coords.longitude], 15);
+        }, function(err) {
+            console.log('لم يتم تحديد الموقع');
+        });
+    }
+};
+    </script>
+</body>
+</html>

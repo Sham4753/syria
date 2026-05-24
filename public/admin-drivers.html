@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#007A3D"><title>إدارة السائقين - سوريا الإلكترونية</title>
+    <style>
+        :root { --primary: #007A3D; --primary-light: #00B359; --white: #FFFFFF; --bg: #F0F4F0; --text: #1A1A1A; --text-secondary: #6C757D; --red: #CE1126; --gold: #D4AF37; --glass-bg: rgba(255,255,255,0.7); --glass-shadow: 0 4px 16px rgba(0,0,0,0.06); --radius: 14px; --font: 'Segoe UI', 'Noto Sans Arabic', Tahoma, sans-serif; }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family: var(--font); background: var(--bg); color: var(--text); direction: rtl; padding: 15px; max-width: 520px; margin: 0 auto; padding-bottom: 120px; }
+        a { text-decoration:none; color:inherit; }
+        .glass { background: var(--glass-bg); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.5); box-shadow: var(--glass-shadow); border-radius: var(--radius); }
+        .page-title { font-size: 20px; font-weight: 700; padding: 10px 0 15px; }
+        .section-title { font-size: 16px; font-weight: 700; margin: 15px 0 10px 0; }
+        .form-group { margin-bottom: 10px; } .form-group label { display: block; font-weight: 600; font-size: 13px; margin-bottom: 4px; }
+        .form-group input, .form-group select { width: 100%; padding: 11px; border-radius: var(--radius); border: 2px solid rgba(0,0,0,0.1); font-size: 14px; outline: none; font-family: var(--font); background: var(--white); }
+        .btn { padding: 12px 18px; border-radius: 20px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; width: 100%; text-align: center; margin-bottom: 8px; }
+        .btn-primary { background: var(--primary); color: white; } .btn-danger { background: var(--red); color: white; width: auto; padding: 6px 12px; font-size: 11px; }
+        .btn-sm { padding: 6px 10px; font-size: 11px; width: auto; border-radius: 15px; margin: 2px; border: none; cursor: pointer; }
+        .list-item { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: var(--radius); margin-bottom: 6px; }
+        .list-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; background: var(--primary); color: white; }
+        .list-info { flex: 1; } .list-info h4 { font-size: 14px; font-weight: 600; } .list-info p { font-size: 11px; color: var(--text-secondary); }
+        .msg { text-align: center; margin-top: 8px; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="page-title">🛵 إدارة السائقين</div>
+    <div id="content"></div>
+    <script>
+        const API = '/api';
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        if (user.role !== 'super') { document.body.innerHTML = '<h3>❌ غير مصرح</h3><a href="/login.html">دخول</a>'; }
+        let mode = 'list';
+
+        function load() { if (mode === 'list') showList(); else if (mode === 'add') showForm(); }
+
+        async function showList() {
+            let html = '<button class="btn btn-primary" onclick="mode=\'add\';load();">➕ إضافة سائق</button>';
+            html += '<div class="section-title">🛵 السائقين</div>';
+            try {
+                const res = await fetch(API + '/drivers/nearby'); const data = await res.json();
+                if (data.success && data.data.length > 0) {
+                    data.data.forEach(d => {
+ 
+html += `<div class="list-item glass"><div class="list-icon">${d.vehicle_type === 'motorcycle' ? '🏍️' : '🚗'}</div><div class="list-info"><h4>${d.name}</h4><p>📞 ${d.phone} · ⭐ ${(d.rating||0).toFixed(1)} · ${d.vehicle_plate||''}</p></div><button class="btn btn-sm btn-primary" onclick="editDriver(${d.id})">✏️</button><button class="btn btn-sm btn-danger" onclick="deleteDriver(${d.id})">🗑️</button></div>`;                    });
+                } else { html += '<p style="text-align:center;">لا يوجد سائقين</p>'; }
+            } catch(e) { html += '<p style="color:red;">خطأ</p>'; }
+            document.getElementById('content').innerHTML = html;
+        }
+
+        function showForm() {
+            let html = '<button class="btn btn-sm" style="background:var(--glass-bg);color:var(--primary);width:auto;" onclick="mode=\'list\';load();">← رجوع</button>';
+            html += '<div class="section-title">➕ إضافة سائق</div>';
+            html += '<div class="form-group"><label>اسم السائق *</label><input type="text" id="dName"></div>';
+            html += '<div class="form-group"><label>رقم الجوال *</label><input type="tel" id="dPhone"></div>';
+            html += '<div class="form-group"><label>نوع المركبة</label><select id="dType"><option value="motorcycle">🏍️ موتور (دليفري)</option><option value="car">🚗 سيارة (تكسي)</option></select></div>';
+            html += '<div class="form-group"><label>رقم اللوحة</label><input type="text" id="dPlate" placeholder="مثلاً: دمشق 12345"></div>';
+            html += '<div class="form-group"><label>لون المركبة</label><input type="text" id="dColor" placeholder="أبيض / أسود / ..."></div>';
+            html += '<button class="btn btn-primary" id="saveBtn">💾 حفظ</button>';
+            html += '<div class="msg" id="msg"></div>';
+            document.getElementById('content').innerHTML = html;
+
+            document.getElementById('saveBtn').onclick = async function() {
+                const name = document.getElementById('dName').value.trim(), phone = document.getElementById('dPhone').value.trim();
+                if (!name || !phone) { document.getElementById('msg').innerHTML = '<span style="color:red;">حقول ناقصة</span>'; return; }
+                try {
+                    await fetch(API + '/drivers/register', {
+                        method: 'POST', headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ name, phone, vehicle_type: document.getElementById('dType').value, vehicle_plate: document.getElementById('dPlate').value.trim(), vehicle_color: document.getElementById('dColor').value.trim() })
+                    });
+                    document.getElementById('msg').innerHTML = '<span style="color:green;">✅ تم الحفظ</span>';
+                    setTimeout(() => { mode = 'list'; load(); }, 800);
+                } catch(e) { document.getElementById('msg').innerHTML = '<span style="color:red;">❌ خطأ</span>'; }
+            };
+        }
+
+async function deleteDriver(id) {
+    if (!confirm('متأكد من حذف السائق؟')) return;
+    try {
+        await fetch(API + '/drivers/' + id, { method: 'DELETE' });
+        alert('✅ تم الحذف');
+        mode = 'list'; load();
+    } catch(e) { alert('❌ خطأ'); }
+}
+    async function editDriver(id) {
+        const res = await fetch(API + '/drivers/' + id);
+        const data = await res.json();
+        if (!data.success) return;
+        const d = data.data;
+        mode = 'add'; load();
+        setTimeout(() => {
+            document.getElementById('dName').value = d.name || '';
+            document.getElementById('dPhone').value = d.phone || '';
+            document.getElementById('dType').value = d.vehicle_type || 'motorcycle';
+            document.getElementById('dPlate').value = d.vehicle_plate || '';
+            document.getElementById('dColor').value = d.vehicle_color || '';
+        }, 300);
+    }
+
+    load();
+</script>
+</body>
+</html>

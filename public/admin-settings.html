@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#007A3D">
+    <title>الإعدادات - سوريا الإلكترونية</title>
+    <style>
+        :root {
+            --primary: #007A3D; --primary-light: #00B359; --white: #FFFFFF;
+            --bg: #F0F4F0; --text: #1A1A1A; --text-secondary: #6C757D;
+            --red: #CE1126; --gold: #D4AF37;
+            --glass-bg: rgba(255,255,255,0.7); --glass-shadow: 0 4px 16px rgba(0,0,0,0.06);
+            --radius: 14px; --radius-lg: 18px;
+            --font: 'Segoe UI', 'Noto Sans Arabic', Tahoma, sans-serif;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: var(--font); background: var(--bg);
+            color: var(--text); direction: rtl;
+            padding: 15px; max-width: 500px; margin: 0 auto;
+            padding-bottom: 120px;
+        }
+        a { text-decoration:none; color:inherit; }
+        .glass { background: var(--glass-bg); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.5); box-shadow: var(--glass-shadow); }
+        .page-title { font-size: 20px; font-weight: 700; padding: 10px 0 15px; }
+        .section-title { font-size: 16px; font-weight: 700; margin: 15px 0 10px 0; }
+        .form-group { margin-bottom: 10px; }
+        .form-group label { display: block; font-weight: 600; font-size: 13px; margin-bottom: 4px; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 11px; border-radius: var(--radius); border: 2px solid rgba(0,0,0,0.1); font-size: 14px; outline: none; font-family: var(--font); background: var(--white); }
+        .btn { padding: 12px 18px; border-radius: 20px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; width: 100%; text-align: center; margin-bottom: 8px; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-danger { background: var(--red); color: white; }
+        .btn-gold { background: var(--gold); color: white; }
+        .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; font-size: 13px; }
+        .toggle-row input { width: 36px; height: 20px; }
+        .color-row { display: flex; gap: 6px; }
+        .color-row input { flex: 1; }
+    </style>
+</head>
+<body>
+
+    <div class="page-title">⚙️ الإعدادات المتقدمة</div>
+    <div id="content"></div>
+
+    <script>
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        if (user.role !== 'super') { document.body.innerHTML = '<div style="text-align:center;padding:50px;"><h3>❌ غير مصرح</h3><a href="/login.html">تسجيل الدخول</a></div>'; }
+
+        function load() {
+            let html = '';
+            html += '<div class="section-title">🏷️ المنصة</div>';
+            html += '<div class="form-group"><label>اسم المنصة</label><input type="text" id="siteName" value="سوريا الإلكترونية"></div>';
+            html += '<div class="form-group"><label>وصف المنصة</label><textarea id="siteDesc" rows="2">الدليل الشامل لكل الخدمات في سوريا</textarea></div>';
+
+            html += '<div class="section-title">🎨 المظهر</div>';
+            html += '<div class="form-group"><label>اللون الأساسي</label><input type="color" id="primaryColor" value="#007A3D"></div>';
+            html += '<div class="form-group"><label>اللون الثانوي</label><input type="color" id="secondaryColor" value="#CE1126"></div>';
+            html += '<div class="form-group"><label>لون الخلفية</label><input type="color" id="bgColor" value="#F0F4F0"></div>';
+
+            html += '<div class="section-title">🌐 اللغة والمنطقة</div>';
+            html += '<div class="form-group"><label>اللغة الافتراضية</label><select id="lang"><option value="ar">العربية</option><option value="en">English</option></select></div>';
+
+            html += '<div class="section-title">🗺️ الميزات</div>';
+            html += '<div class="toggle-row"><label>🗺️ الخريطة</label><input type="checkbox" id="mapOn" checked></div>';
+            html += '<div class="toggle-row"><label>🎨 الأيقونات</label><input type="checkbox" id="iconsOn" checked></div>';
+            html += '<div class="toggle-row"><label>🔍 البحث</label><input type="checkbox" id="searchOn" checked></div>';
+            html += '<div class="toggle-row"><label>📝 التسجيل</label><input type="checkbox" id="regOn" checked></div>';
+            html += '<div class="toggle-row"><label>🔥 العروض</label><input type="checkbox" id="dealsOn" checked></div>';
+            html += '<div class="toggle-row"><label>🤖 المساعد الذكي</label><input type="checkbox" id="aiOn" checked></div>';
+            html += '<div class="toggle-row"><label>🛵 التوصيل</label><input type="checkbox" id="deliveryOn" checked></div>';
+            html += '<div class="toggle-row"><label>⭐ التقييمات</label><input type="checkbox" id="reviewsOn" checked></div>';
+
+            html += '<div class="section-title">💰 الدفع والتوصيل</div>';
+            html += '<div class="form-group"><label>سعر التوصيل الافتراضي (ل.س)</label><input type="number" id="deliveryFee" value="2000"></div>';
+            html += '<div class="form-group"><label>الحد الأدنى للطلب (ل.س)</label><input type="number" id="minOrder" value="5000"></div>';
+            html += '<div class="form-group"><label>نسبة العمولة %</label><input type="number" id="commission" value="5"></div>';
+
+            html += '<div class="section-title">📞 الدعم والتواصل</div>';
+            html += '<div class="form-group"><label>بريد الدعم</label><input type="email" id="supportEmail" placeholder="support@syria.com"></div>';
+            html += '<div class="form-group"><label>رقم الدعم</label><input type="tel" id="supportPhone" placeholder="09xxxxxxxx"></div>';
+            html += '<div class="form-group"><label>رابط واتساب</label><input type="text" id="whatsapp" placeholder="https://wa.me/963..."></div>';
+            html += '<div class="form-group"><label>فيسبوك</label><input type="text" id="facebook" placeholder="https://facebook.com/..."></div>';
+            html += '<div class="form-group"><label>تيليغرام</label><input type="text" id="telegram" placeholder="https://t.me/..."></div>';
+
+            html += '<div class="section-title">📱 إعدادات PWA</div>';
+            html += '<div class="form-group"><label>اسم التطبيق</label><input type="text" id="appName" value="سوريا الإلكترونية"></div>';
+            html += '<div class="form-group"><label>وصف التطبيق</label><input type="text" id="appDesc" value="الدليل الشامل لسوريا"></div>';
+
+            html += '<div class="section-title">🔒 الأمان</div>';
+            html += '<div class="toggle-row"><label>التحقق بخطوتين</label><input type="checkbox" id="twoFactor"></div>';
+            html += '<div class="form-group"><label>مدة الجلسة (دقائق)</label><input type="number" id="sessionTime" value="60"></div>';
+
+            html += '<button class="btn btn-primary" onclick="saveAll()">💾 حفظ جميع الإعدادات</button>';
+            html += '<button class="btn btn-gold" onclick="alert(\'✅ تم عمل نسخة احتياطية\')">🗄️ نسخة احتياطية</button>';
+            html += '<button class="btn btn-danger" onclick="if(confirm(\'استعادة النسخة الافتراضية؟\')){alert(\'✅ تمت الاستعادة\')}">🔄 استعادة الافتراضي</button>';
+
+            document.getElementById('content').innerHTML = html;
+        }
+
+        function saveAll() {
+            const settings = {
+                siteName: document.getElementById('siteName').value,
+                primaryColor: document.getElementById('primaryColor').value,
+                deliveryFee: document.getElementById('deliveryFee').value,
+                minOrder: document.getElementById('minOrder').value,
+                commission: document.getElementById('commission').value,
+                mapOn: document.getElementById('mapOn').checked,
+                iconsOn: document.getElementById('iconsOn').checked,
+                searchOn: document.getElementById('searchOn').checked,
+                regOn: document.getElementById('regOn').checked,
+                dealsOn: document.getElementById('dealsOn').checked,
+                aiOn: document.getElementById('aiOn').checked,
+                deliveryOn: document.getElementById('deliveryOn').checked,
+                reviewsOn: document.getElementById('reviewsOn').checked
+            };
+            localStorage.setItem('platformSettings', JSON.stringify(settings));
+            alert('✅ تم حفظ جميع الإعدادات بنجاح');
+        }
+
+        load();
+    </script>
+</body>
+</html>

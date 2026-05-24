@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#007A3D">
+    <title>تسجيل الدخول - سوريا الإلكترونية</title>
+    <style>
+        :root {
+            --primary: #007A3D; --primary-light: #00B359; --white: #FFFFFF;
+            --bg: #F0F4F0; --text: #1A1A1A; --text-secondary: #6C757D;
+            --glass-bg: rgba(255,255,255,0.7); --glass-shadow: 0 4px 16px rgba(0,0,0,0.06);
+            --radius: 14px; --radius-lg: 18px;
+            --font: 'Segoe UI', 'Noto Sans Arabic', Tahoma, sans-serif;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: var(--font); background: linear-gradient(180deg, #E8F5E9, #F0F4F0);
+            color: var(--text); direction: rtl;
+            min-height: 100vh; display: flex; align-items: center; justify-content: center;
+            padding: 20px;
+        }
+        a { text-decoration:none; color:inherit; }
+        .glass {
+            background: var(--glass-bg); backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.5); box-shadow: var(--glass-shadow);
+        }
+        .login-box {
+            width: 100%; max-width: 400px; padding: 30px 20px;
+            border-radius: var(--radius-lg); text-align: center;
+        }
+        .logo { font-size: 48px; margin-bottom: 10px; }
+        .title { font-size: 22px; font-weight: 700; margin-bottom: 5px; }
+        .subtitle { font-size: 13px; color: var(--text-secondary); margin-bottom: 25px; }
+        .input-group { margin-bottom: 14px; text-align: right; }
+        .input-group label { display: block; font-weight: 600; font-size: 13px; margin-bottom: 6px; }
+        .input-group input {
+            width: 100%; padding: 14px; border-radius: var(--radius);
+            border: 2px solid rgba(0,0,0,0.1); font-size: 14px; outline: none;
+            font-family: var(--font); text-align: center; letter-spacing: 2px;
+        }
+        .input-group input:focus { border-color: var(--primary); }
+        .login-btn {
+            width: 100%; padding: 16px; background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white; border: none; border-radius: 16px; font-size: 17px; font-weight: 700;
+            cursor: pointer; margin-top: 10px;
+        }
+        .back-link { display: block; margin-top: 20px; font-size: 14px; color: var(--text-secondary); }
+        .back-link a { color: var(--primary); font-weight: 600; }
+    </style>
+</head>
+<body>
+
+    <div class="login-box glass">
+        <div class="logo">🔐</div>
+        <div class="title">تسجيل الدخول</div>
+        <div class="subtitle">للمسؤولين وأصحاب المنشآت فقط</div>
+
+        <div class="input-group">
+            <label>كود الدخول</label>
+            <input type="text" id="code" placeholder="أدخل الكود" autocomplete="off">
+        </div>
+
+        <div class="input-group">
+            <label>كلمة المرور</label>
+            <input type="password" id="password" placeholder="كلمة المرور">
+        </div>
+
+        <button class="login-btn" onclick="login()">🚀 دخول</button>
+
+        <div class="back-link">
+            <a href="/">← العودة للرئيسية</a>
+        </div>
+    </div>
+
+    <script>
+        async function login() {
+            const code = document.getElementById('code').value.trim();
+            const password = document.getElementById('password').value.trim();
+
+            if (!code || !password) { alert('الرجاء إدخال الكود وكلمة المرور'); return; }
+
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code, password })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    window.location.href = data.redirect;
+                } else {
+                    alert('❌ ' + (data.message || 'فشل الدخول'));
+                }
+            } catch (e) {
+                alert('❌ خطأ في الاتصال');
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#007A3D">
+    <title>تتبع الطلب - سوريا الإلكترونية</title>
+    <style>
+        :root {
+            --primary: #007A3D; --primary-light: #00B359; --white: #FFFFFF;
+            --bg: #F0F4F0; --text: #1A1A1A; --text-secondary: #6C757D;
+            --gold: #D4AF37; --red: #CE1126;
+            --glass-bg: rgba(255,255,255,0.7); --glass-shadow: 0 4px 16px rgba(0,0,0,0.06);
+            --shadow: 0 2px 8px rgba(0,0,0,0.06); --shadow-md: 0 4px 16px rgba(0,0,0,0.1);
+            --radius: 14px; --radius-lg: 18px;
+            --font: 'Segoe UI', 'Noto Sans Arabic', Tahoma, sans-serif;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: var(--font); background: var(--bg);
+            color: var(--text); direction: rtl;
+            padding: 15px; max-width: 500px; margin: 0 auto;
+        }
+        a { text-decoration:none; color:inherit; }
+        .glass {
+            background: var(--glass-bg); backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.5); box-shadow: var(--glass-shadow);
+        }
+        .header {
+            display: flex; align-items: center; gap: 12px;
+            padding: 10px 0 15px;
+        }
+        .back-btn {
+            width: 40px; height: 40px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; font-weight: bold; cursor: pointer;
+        }
+        .page-title { font-size: 20px; font-weight: 700; }
+        .order-number {
+            text-align: center; padding: 12px; border-radius: var(--radius-lg);
+            margin-bottom: 15px; font-size: 18px; font-weight: 700; color: var(--primary);
+        }
+        .driver-card {
+            display: flex; align-items: center; gap: 14px;
+            padding: 16px; border-radius: var(--radius-lg); margin-bottom: 15px;
+        }
+        .driver-img {
+            width: 60px; height: 60px; border-radius: 50%;
+            background: linear-gradient(135deg, #E8F5E9, #C8E6C9);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 32px; flex-shrink: 0;
+        }
+        .driver-info { flex: 1; }
+        .driver-info h4 { font-size: 16px; font-weight: 600; }
+        .driver-info p { font-size: 12px; color: var(--text-secondary); }
+        .driver-rating { color: var(--gold); font-weight: 700; }
+        .call-btn {
+            padding: 10px 18px; background: var(--primary); color: white;
+            border-radius: 20px; font-size: 14px; font-weight: 600; border: none; cursor: pointer;
+        }
+        .status-steps {
+            display: flex; flex-direction: column; gap: 0; margin-bottom: 20px;
+        }
+        .step {
+            display: flex; align-items: center; gap: 12px; padding: 12px 0;
+            position: relative;
+        }
+        .step::before {
+            content: ''; position: absolute; right: 14px; top: 40px;
+            width: 2px; height: calc(100% - 20px); background: #ddd;
+        }
+        .step:last-child::before { display: none; }
+        .step-icon {
+            width: 30px; height: 30px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; flex-shrink: 0; z-index: 1;
+            background: #ddd;
+        }
+        .step.active .step-icon { background: var(--primary); color: white; }
+        .step.done .step-icon { background: var(--primary-light); color: white; }
+        .step.done::before { background: var(--primary-light); }
+        .step-text { flex: 1; }
+        .step-text h5 { font-size: 14px; font-weight: 600; }
+        .step-text span { font-size: 11px; color: var(--text-secondary); }
+        .map-preview {
+            background: linear-gradient(135deg, #E8F5E9, #C8E6C9);
+            border-radius: var(--radius-lg); height: 200px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 48px; margin-bottom: 15px;
+        }
+        .eta-box {
+            text-align: center; padding: 16px; border-radius: var(--radius-lg);
+            font-size: 22px; font-weight: 700; color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <a href="/" class="back-btn glass">←</a>
+        <div class="page-title">🛵 تتبع الطلب</div>
+    </div>
+
+    <div class="order-number glass">📦 طلب #<span id="orderNum">4521</span></div>
+
+    <div class="driver-card glass">
+        <div class="driver-img">🚗</div>
+        <div class="driver-info">
+            <h4 id="driverName">أحمد</h4>
+            <p>🚗 تويوتا · <span id="driverPlate">دمشق 12345</span></p>
+            <p class="driver-rating">⭐ <span id="driverRating">4.8</span></p>
+        </div>
+        <a href="tel:0999999999" class="call-btn">📞 اتصال</a>
+    </div>
+
+    <div class="eta-box glass" id="etaBox">⏳ 10-15 دقيقة</div>
+
+    <div class="map-preview">🗺️</div>
+
+    <div class="status-steps" id="statusSteps">
+        <div class="step done">
+            <div class="step-icon">✓</div>
+            <div class="step-text"><h5>تم تأكيد الطلب</h5><span>المطعم يستعد لتحضير طلبك</span></div>
+        </div>
+        <div class="step active">
+            <div class="step-icon">🛵</div>
+            <div class="step-text"><h5>السائق في الطريق</h5><span>أحمد في طريقه لاستلام طلبك</span></div>
+        </div>
+        <div class="step">
+            <div class="step-icon">📦</div>
+            <div class="step-text"><h5>توصيل الطلب</h5><span>سيتم التوصيل خلال دقائق</span></div>
+        </div>
+    </div>
+
+    <script>
+        const orderId = new URLSearchParams(window.location.search).get('id') || '4521';
+        document.getElementById('orderNum').textContent = orderId;
+
+        // محاكاة تتبع حي
+        function simulateTracking() {
+            const etas = ['⏳ 8-12 دقيقة', '⏳ 5-8 دقائق', '⏳ 2-3 دقائق', '✅ وصل!'];
+            let step = 1;
+            setInterval(() => {
+                if (step < etas.length) {
+                    document.getElementById('etaBox').textContent = etas[step];
+                    step++;
+                }
+            }, 5000);
+        }
+
+        simulateTracking();
+    </script>
+</body>
+</html>

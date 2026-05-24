@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#007A3D">
+    <title>التوزيع الذكي - سوريا الإلكترونية</title>
+    <style>
+        :root {
+            --primary: #007A3D; --primary-light: #00B359; --white: #FFFFFF;
+            --bg: #F0F4F0; --text: #1A1A1A; --text-secondary: #6C757D;
+            --gold: #D4AF37; --red: #CE1126;
+            --glass-bg: rgba(255,255,255,0.7); --glass-shadow: 0 4px 16px rgba(0,0,0,0.06);
+            --shadow: 0 2px 8px rgba(0,0,0,0.06); --shadow-md: 0 4px 16px rgba(0,0,0,0.1);
+            --radius: 14px; --radius-lg: 18px;
+            --font: 'Segoe UI', 'Noto Sans Arabic', Tahoma, sans-serif;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: var(--font); background: var(--bg);
+            color: var(--text); direction: rtl;
+            padding: 15px; max-width: 500px; margin: 0 auto;
+        }
+        a { text-decoration:none; color:inherit; }
+        .glass {
+            background: var(--glass-bg); backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.5); box-shadow: var(--glass-shadow);
+        }
+        .header {
+            display: flex; align-items: center; gap: 12px;
+            padding: 10px 0 15px;
+        }
+        .back-btn {
+            width: 40px; height: 40px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; font-weight: bold; cursor: pointer;
+        }
+        .page-title { font-size: 20px; font-weight: 700; }
+        .section-title { font-size: 16px; font-weight: 700; margin: 0 0 10px 0; }
+        .driver-card {
+            display: flex; align-items: center; gap: 14px;
+            padding: 16px; border-radius: var(--radius-lg); margin-bottom: 10px;
+            transition: 0.2s; cursor: pointer;
+        }
+        .driver-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+        .driver-card.assigned { border: 2px solid var(--primary); background: #D1FAE5; }
+        .driver-img {
+            width: 56px; height: 56px; border-radius: 50%;
+            background: linear-gradient(135deg, #E8F5E9, #C8E6C9);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 28px; flex-shrink: 0;
+        }
+        .driver-info { flex: 1; }
+        .driver-info h4 { font-size: 15px; font-weight: 600; }
+        .driver-info p { font-size: 11px; color: var(--text-secondary); }
+        .driver-rating { color: var(--gold); font-weight: 700; }
+        .driver-distance { color: var(--primary); font-size: 13px; font-weight: 600; }
+        .status-badge {
+            padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 600;
+        }
+        .status-searching { background: #FEF3C7; color: #92400E; }
+        .status-found { background: #D1FAE5; color: #065F46; }
+        .pulse { animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.5} }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <a href="/" class="back-btn glass">←</a>
+        <div class="page-title">🚗 التوزيع الذكي</div>
+    </div>
+
+    <div id="statusBox" style="text-align:center;padding:20px;">
+        <span class="status-badge status-searching pulse">🔍 جاري البحث عن أقرب سائق...</span>
+    </div>
+
+    <div class="section-title">🛵 السائقين القريبين</div>
+    <div id="driversList"></div>
+
+    <script>
+        const API = '/api';
+        let assignedDriver = null;
+
+        async function searchDrivers() {
+            try {
+                const res = await fetch(`${API}/drivers/nearby`);
+                const data = await res.json();
+                
+                if (data.success && data.data.length > 0) {
+                    document.getElementById('statusBox').innerHTML = '<span class="status-badge status-found">✅ تم العثور على ' + data.data.length + ' سائقين قريبين</span>';
+                    
+                    document.getElementById('driversList').innerHTML = data.data.map(d => `
+                        <div class="driver-card glass ${assignedDriver === d.id ? 'assigned' : ''}" id="driver${d.id}" onclick="assignDriver(${d.id}, '${d.name}')">
+                            <div class="driver-img">${d.vehicle_type === 'motorcycle' ? '🏍️' : '🚗'}</div>
+                            <div class="driver-info">
+                                <h4>${d.name}</h4>
+                                <p>${d.vehicle_type === 'motorcycle' ? '🏍️ دليفري' : '🚗 تكسي'} · ${d.vehicle_plate || ''} · ${d.vehicle_color || ''}</p>
+                                <p class="driver-rating">⭐ ${(d.rating || 0).toFixed(1)} · ${d.total_trips || 0} رحلة</p>
+                            </div>
+                            <div class="driver-distance">📞 ${d.phone}</div>
+                        </div>
+                    `).join('');
+                } else {
+                    document.getElementById('statusBox').innerHTML = '<span class="status-badge" style="background:#FEE2E2;color:#991B1B;">❌ لا يوجد سائقين متاحين حالياً</span>';
+                }
+            } catch (e) {
+                document.getElementById('statusBox').innerHTML = '<span class="status-badge" style="background:#FEE2E2;color:#991B1B;">❌ خطأ في الاتصال</span>';
+            }
+        }
+
+        function assignDriver(driverId, driverName) {
+            assignedDriver = driverId;
+            document.querySelectorAll('.driver-card').forEach(c => c.classList.remove('assigned'));
+            document.getElementById('driver' + driverId).classList.add('assigned');
+            document.getElementById('statusBox').innerHTML = `
+                <div class="glass" style="padding:16px;text-align:center;">
+                    <div style="font-size:48px;">✅</div>
+                    <h4 style="margin:8px 0;">تم تعيين ${driverName}</h4>
+                    <p style="color:var(--text-secondary);">السائق في طريقه إليك</p>
+                    <a href="/track.html" class="glass" style="display:inline-block;margin-top:10px;padding:10px 20px;border-radius:20px;color:var(--primary);font-weight:600;">🛵 تتبع الرحلة</a>
+                </div>
+            `;
+        }
+
+        searchDrivers();
+    </script>
+</body>
+</html>

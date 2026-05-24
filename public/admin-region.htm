@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#007A3D">
+    <title>تفاصيل المنطقة - سوريا الإلكترونية</title>
+    <style>
+        :root {
+            --primary: #007A3D; --primary-light: #00B359; --white: #FFFFFF;
+            --bg: #F0F4F0; --text: #1A1A1A; --text-secondary: #6C757D;
+            --red: #CE1126; --gold: #D4AF37;
+            --glass-bg: rgba(255,255,255,0.7); --glass-shadow: 0 4px 16px rgba(0,0,0,0.06);
+            --radius: 14px; --radius-lg: 18px;
+            --font: 'Segoe UI', 'Noto Sans Arabic', Tahoma, sans-serif;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: var(--font); background: var(--bg);
+            color: var(--text); direction: rtl;
+            padding: 15px; max-width: 500px; margin: 0 auto;
+            padding-bottom: 100px;
+        }
+        a { text-decoration:none; color:inherit; }
+        .glass { background: var(--glass-bg); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.5); box-shadow: var(--glass-shadow); }
+        .header { display: flex; align-items: center; gap: 10px; padding: 10px 0 15px; }
+        .back-btn { font-size: 20px; cursor: pointer; padding: 8px; }
+        .page-title { font-size: 20px; font-weight: 700; }
+        .section-title { font-size: 16px; font-weight: 700; margin: 15px 0 10px 0; }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-weight: 600; font-size: 13px; margin-bottom: 5px; }
+        .form-group input { width: 100%; padding: 12px; border-radius: var(--radius); border: 2px solid rgba(0,0,0,0.1); font-size: 14px; outline: none; font-family: var(--font); background: var(--white); }
+        .btn { padding: 12px 20px; border-radius: 20px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; display: inline-block; width: 100%; text-align: center; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-danger { background: var(--red); color: white; }
+        .btn-gold { background: var(--gold); color: white; }
+        .list-item { display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: var(--radius); margin-bottom: 6px; cursor: pointer; transition: 0.2s; }
+        .list-item:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+        .list-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+        .list-info { flex: 1; }
+        .list-info h4 { font-size: 14px; font-weight: 600; }
+        .list-info p { font-size: 11px; color: var(--text-secondary); }
+        .stats { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+        .stat { padding: 10px 14px; border-radius: var(--radius); text-align: center; flex: 1; min-width: 70px; }
+        .stat-num { font-size: 18px; font-weight: 700; color: var(--primary); }
+        .stat-lbl { font-size: 10px; color: var(--text-secondary); }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <a href="/admin.html" class="back-btn">←</a>
+        <div class="page-title" id="pageTitle">تحميل...</div>
+    </div>
+
+    <div id="content"></div>
+
+    <script>
+        const API = '/api';
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        if (user.role !== 'super') { document.body.innerHTML = '<div style="text-align:center;padding:50px;"><h3>❌ غير مصرح</h3><a href="/login.html">تسجيل الدخول</a></div>'; }
+
+        const params = new URLSearchParams(window.location.search);
+        const regionId = params.get('id');
+
+        async function load() {
+            if (!regionId) return;
+            const res = await fetch(API + '/regions/' + regionId);
+            const data = await res.json();
+            if (!data.success) { document.getElementById('content').innerHTML = '<p style="text-align:center;">❌ غير موجود</p>'; return; }
+
+            const r = data.data;
+            document.getElementById('pageTitle').textContent = r.name_ar;
+            document.title = r.name_ar + ' - لوحة التحكم';
+
+            const levelNames = { 1: 'محافظة', 2: 'منطقة', 3: 'ناحية', 4: 'قرية' };
+            const levelName = levelNames[r.admin_level_id] || 'منطقة';
+
+            let html = '';
+            html += `<div class="form-group"><label>اسم ال${levelName}</label><input type="text" id="regName" value="${r.name_ar}"></div>`;
+            html += `<div class="form-group"><label>عدد السكان</label><input type="number" id="regPop" value="${r.population || 0}"></div>`;
+            html += `<button class="btn btn-primary" onclick="saveRegion(${r.id})">💾 حفظ التعديلات</button>`;
+
+            // المستويات التابعة
+            const subRes = await fetch(API + '/regions?parent_id=' + regionId);
+            const subData = await subRes.json();
+            if (subData.success && subData.data.length > 0) {
+                html += '<div class="section-title">📍 المستويات التابعة</div>';
+                subData.data.forEach(s => {
+                    const icon = s.admin_level_id == 2 ? '📍' : s.admin_level_id == 3 ? '🏘️' : '🏡';
+                    html += `<a href="/admin-region.html?id=${s.id}" class="list-item glass">
+                        <div class="list-icon" style="background:var(--primary-light);color:white;">${icon}</div>
+                        <div class="list-info"><h4>${s.name_ar}</h4><p>👥 ${(s.population || 0).toLocaleString()}</p></div>
+                        <span>←</span>
+                    </a>`;
+                });
+            }
+
+            // المنشآت
+            const bizRes = await fetch(API + '/businesses?region_id=' + regionId);
+            const bizData = await bizRes.json();
+            if (bizData.success && bizData.data.length > 0) {
+                html += '<div class="section-title">🏪 المنشآت</div>';
+                bizData.data.forEach(b => {
+                    html += `<div class="list-item glass">
+                        <div class="list-icon" style="background:var(--gold);color:white;">🏪</div>
+                        <div class="list-info"><h4>${b.name_ar}</h4><p>⭐ ${(b.average_rating||0).toFixed(1)} · 📞 ${b.phone||'---'}</p></div>
+                    </div>`;
+                });
+            }
+
+            // المركبات (داخل هذه المنطقة)
+            const vehRes = await fetch(API + '/drivers/nearby');
+            const vehData = await vehRes.json();
+            if (vehData.success && vehData.data.length > 0) {
+                html += '<div class="section-title">🚗 المركبات</div>';
+                vehData.data.forEach(d => {
+                    html += `<div class="list-item glass">
+                        <div class="list-icon" style="background:var(--primary);color:white;">${d.vehicle_type === 'motorcycle' ? '🏍️' : '🚗'}</div>
+                        <div class="list-info"><h4>${d.name}</h4><p>📞 ${d.phone} · ⭐ ${(d.rating||0).toFixed(1)}</p></div>
+                    </div>`;
+                });
+            }
+
+            html += `<button class="btn btn-gold" style="margin-top:10px;" onclick="alert('➕ إضافة منشأة جديدة')">➕ إضافة منشأة</button>`;
+            html += `<button class="btn btn-danger" style="margin-top:5px;" onclick="if(confirm('حذف ${r.name_ar}؟')){alert('✅ تم الحذف');window.location='/admin.html';}">🗑️ حذف ${levelName}</button>`;
+
+            document.getElementById('content').innerHTML = html;
+        }
+
+        function saveRegion(id) {
+            alert('✅ تم حفظ التعديلات لـ ' + document.getElementById('regName').value);
+        }
+
+        load();
+    </script>
+</body>
+</html>

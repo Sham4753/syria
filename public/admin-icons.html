@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#007A3D">
+    <title>الأيقونات والصور - سوريا الإلكترونية</title>
+    <style>
+        :root {
+            --primary: #007A3D; --primary-light: #00B359; --white: #FFFFFF;
+            --bg: #F0F4F0; --text: #1A1A1A; --text-secondary: #6C757D;
+            --red: #CE1126; --gold: #D4AF37;
+            --glass-bg: rgba(255,255,255,0.7); --glass-shadow: 0 4px 16px rgba(0,0,0,0.06);
+            --radius: 14px; --radius-lg: 18px;
+            --font: 'Segoe UI', 'Noto Sans Arabic', Tahoma, sans-serif;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: var(--font); background: var(--bg);
+            color: var(--text); direction: rtl;
+            padding: 15px; max-width: 500px; margin: 0 auto;
+            padding-bottom: 120px;
+        }
+        a { text-decoration:none; color:inherit; }
+        .glass { background: var(--glass-bg); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.5); box-shadow: var(--glass-shadow); }
+        .page-title { font-size: 20px; font-weight: 700; padding: 10px 0 15px; }
+        .section-title { font-size: 16px; font-weight: 700; margin: 15px 0 10px 0; }
+        .form-group { margin-bottom: 10px; }
+        .form-group label { display: block; font-weight: 600; font-size: 13px; margin-bottom: 4px; }
+        .form-group input, .form-group select { width: 100%; padding: 11px; border-radius: var(--radius); border: 2px solid rgba(0,0,0,0.1); font-size: 14px; outline: none; font-family: var(--font); background: var(--white); }
+        .btn { padding: 11px 18px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; width: 100%; text-align: center; margin-bottom: 6px; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-danger { background: var(--red); color: white; padding: 6px 10px; font-size: 11px; width: auto; }
+        .btn-sm { padding: 6px 10px; font-size: 11px; width: auto; border-radius: 15px; }
+        .list-item { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: var(--radius); margin-bottom: 6px; }
+        .list-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; overflow: hidden; position: relative; }
+        .list-icon img { width: 100%; height: 100%; object-fit: cover; }
+        .list-badge { position: absolute; top: -5px; right: -5px; background: var(--red); color: white; font-size: 9px; padding: 2px 6px; border-radius: 10px; font-weight: 700; }
+        .list-dot { position: absolute; top: -3px; right: -3px; width: 10px; height: 10px; background: var(--red); border-radius: 50%; border: 2px solid white; }
+        .list-info { flex: 1; }
+        .list-info h4 { font-size: 13px; font-weight: 600; }
+        .list-info p { font-size: 10px; color: var(--text-secondary); }
+        .color-row { display: flex; gap: 6px; }
+        .color-row input { flex: 1; }
+        .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; font-size: 13px; }
+        .toggle-row input { width: 36px; height: 20px; }
+        .preview-box {
+            width: 100%; padding: 20px; border-radius: var(--radius-lg); text-align: center;
+            margin-bottom: 12px; background: #E8F5E9;
+        }
+        .preview-icon { width: 60px; height: 60px; border-radius: 16px; display: inline-flex; align-items: center; justify-content: center; font-size: 28px; position: relative; }
+        .preview-icon img { width: 100%; height: 100%; object-fit: cover; border-radius: 16px; }
+    </style>
+</head>
+<body>
+
+    <div class="page-title">🎨 الأيقونات والصور</div>
+    <div id="content"></div>
+
+    <script>
+        const API = '/api';
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        if (user.role !== 'super') { document.body.innerHTML = '<div style="text-align:center;padding:50px;"><h3>❌ غير مصرح</h3><a href="/login.html">تسجيل الدخول</a></div>'; }
+
+        async function load() {
+            const res = await fetch(API + '/home-icons');
+            const data = await res.json();
+            let html = '';
+
+            // نموذج الإضافة
+            html += '<div class="section-title">➕ إضافة أيقونة جديدة</div>';
+            html += '<div class="preview-box"><div class="preview-icon" id="previewIcon" style="background:#FF6B6B;">📌</div><p style="font-size:12px;margin-top:5px;" id="previewName">معاينة</p></div>';
+            html += '<div class="form-group"><label>اسم الأيقونة</label><input type="text" id="iconName" placeholder="مطاعم" oninput="updatePreview()"></div>';
+            html += '<div class="form-group"><label>Emoji (أو اتركه فارغ للصورة)</label><input type="text" id="iconEmoji" placeholder="🍽️" oninput="updatePreview()"></div>';
+            html += '<div class="form-group"><label>📷 صورة الأيقونة</label><input type="file" id="iconImage" accept="image/*" style="padding:8px;" onchange="previewImage()"></div>';
+            html += '<div class="form-group"><label>الألوان (أساسي + تدرج)</label><div class="color-row"><input type="color" id="iconColor" value="#FF6B6B" oninput="updatePreview()"><input type="color" id="iconColor2" value="#FF8E53" oninput="updatePreview()"></div></div>';
+            html += '<div class="form-group"><label>الرابط</label><input type="text" id="iconLink" value="/" oninput="updatePreview()"></div>';
+            html += '<div class="form-group"><label>🏷️ نص الوسم (اختياري)</label><input type="text" id="iconBadge" placeholder="جديد / خصم / ..."></div>';
+            html += '<div class="form-group"><label>لون الوسم</label><input type="color" id="iconBadgeColor" value="#CE1126"></div>';
+            html += '<div class="toggle-row"><label>🔔 إظهار نقطة إشعار</label><input type="checkbox" id="iconDot"></div>';
+            html += '<div class="toggle-row"><label>🔗 فتح في تبويب جديد</label><input type="checkbox" id="iconNewTab"></div>';
+            html += '<div class="form-group"><label>📅 تاريخ البداية (اختياري)</label><input type="date" id="iconStart"></div>';
+            html += '<div class="form-group"><label>📅 تاريخ النهاية (اختياري)</label><input type="date" id="iconEnd"></div>';
+            html += '<button class="btn btn-primary" id="addBtn">➕ إضافة الأيقونة</button>';
+
+            // قائمة الأيقونات
+            html += '<div class="section-title">📋 الأيقونات الحالية (<span id="iconCount">0</span>)</div>';
+            html += '<div id="iconsList"></div>';
+
+            document.getElementById('content').innerHTML = html;
+
+            // إضافة أيقونة
+            document.getElementById('addBtn').onclick = async function() {
+                const name = document.getElementById('iconName').value.trim();
+                if (!name) return alert('الرجاء إدخال اسم');
+                let imageUrl = '';
+                const file = document.getElementById('iconImage').files[0];
+                if (file) {
+                    const fd = new FormData(); fd.append('icon', file);
+                    try { const up = await fetch(API + '/upload-icon', { method: 'POST', body: fd }); const ud = await up.json(); if (ud.success) imageUrl = ud.image_url; } catch(e) {}
+                }
+                await fetch(API + '/home-icons', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        name_ar: name, icon_emoji: document.getElementById('iconEmoji').value.trim(),
+                        icon_color: document.getElementById('iconColor').value,
+                        link_url: document.getElementById('iconLink').value.trim() || '/',
+                        image_url: imageUrl
+                    })
+                });
+                alert('✅ تمت الإضافة');
+                load();
+            };
+
+            // عرض الأيقونات
+            renderIcons(data.data || []);
+        }
+
+        function renderIcons(icons) {
+            document.getElementById('iconCount').textContent = icons.length;
+            let list = '';
+            if (icons.length > 0) {
+                icons.forEach((icon, i) => {
+                    const bg = icon.icon_color || '#007A3D';
+                    const content = icon.image_url ? `<img src="${icon.image_url}">` : (icon.icon_emoji || '📌');
+                    list += `<div class="list-item glass">
+                        <div class="list-icon" style="background:${bg};">${content}</div>
+                        <div class="list-info"><h4>${icon.name_ar}</h4><p>${icon.link_url || '/'}</p></div>
+                        <button class="btn btn-sm btn-danger" onclick="deleteIcon(${icon.id})">🗑️</button>
+                    </div>`;
+                });
+            } else {
+                list = '<p style="text-align:center;color:var(--text-secondary);">لا توجد أيقونات</p>';
+            }
+            document.getElementById('iconsList').innerHTML = list;
+        }
+
+        async function deleteIcon(id) {
+            if (!confirm('متأكد من الحذف؟')) return;
+            await fetch(API + '/home-icons/' + id, {method:'DELETE'});
+            alert('✅ تم الحذف');
+            load();
+        }
+
+        function updatePreview() {
+            const name = document.getElementById('iconName').value || 'معاينة';
+            const emoji = document.getElementById('iconEmoji').value || '📌';
+            const color = document.getElementById('iconColor').value;
+            const color2 = document.getElementById('iconColor2').value;
+            document.getElementById('previewIcon').style.background = `linear-gradient(135deg, ${color}, ${color2})`;
+            document.getElementById('previewIcon').innerHTML = emoji;
+            document.getElementById('previewName').textContent = name;
+        }
+
+        function previewImage() {
+            const file = document.getElementById('iconImage').files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('previewIcon').innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;border-radius:16px;">`;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        load();
+    </script>
+</body>
+</html>

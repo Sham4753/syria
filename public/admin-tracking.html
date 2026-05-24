@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#007A3D"><title>تتبع المركبات - سوريا الإلكترونية</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <style>
+        :root { --primary: #007A3D; --bg: #F0F4F0; --text: #1A1A1A; --radius: 14px; --font: 'Segoe UI', 'Noto Sans Arabic', Tahoma, sans-serif; }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family: var(--font); background: var(--bg); color: var(--text); direction: rtl; padding: 15px; max-width: 520px; margin: 0 auto; }
+        a { text-decoration:none; color:inherit; }
+        .glass { background: rgba(255,255,255,0.7); backdrop-filter: blur(10px); border-radius: var(--radius); box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+        .header { display: flex; align-items: center; gap: 12px; padding: 10px 0 15px; }
+        .back-btn { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; cursor: pointer; }
+        .page-title { font-size: 20px; font-weight: 700; }
+        .map-container { height: 400px; border-radius: var(--radius); overflow: hidden; margin-bottom: 15px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+        .section-title { font-size: 16px; font-weight: 700; margin: 15px 0 10px 0; }
+        .list-item { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: var(--radius); margin-bottom: 6px; background: rgba(255,255,255,0.7); }
+        .list-icon { font-size: 24px; } .list-info { flex: 1; } .list-info h4 { font-size: 14px; font-weight: 600; } .list-info p { font-size: 11px; color: #6C757D; }
+        .status { padding: 4px 10px; border-radius: 12px; font-size: 10px; font-weight: 700; }
+        .status-active { background: #D1FAE5; color: #065F46; }
+        .status-idle { background: #FEF3C7; color: #92400E; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="/admin.html" class="back-btn glass">←</a>
+        <div class="page-title">🗺️ تتبع المركبات</div>
+    </div>
+    <div class="map-container" id="map"></div>
+    <div class="section-title">📋 المركبات</div>
+    <div id="driversList"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const API = '/api';
+        var map = L.map('map').setView([34.8, 38.5], 7);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution: '', maxZoom: 18}).addTo(map);
+        var markersGroup = L.layerGroup().addTo(map);
+
+        async function loadDrivers() {
+            try {
+                const res = await fetch(API + '/drivers/nearby');
+                const data = await res.json();
+                if (data.success) {
+                    renderList(data.data);
+                    renderMarkers(data.data);
+                }
+            } catch(e) {}
+        }
+
+        function renderList(drivers) {
+            const container = document.getElementById('driversList');
+            if (drivers.length === 0) { container.innerHTML = '<p style="text-align:center;">لا يوجد مركبات</p>'; return; }
+            container.innerHTML = drivers.map(d => `
+                <div class="list-item glass">
+                    <div class="list-icon">${d.vehicle_type === 'motorcycle' ? '🏍️' : '🚗'}</div>
+                    <div class="list-info"><h4>${d.name}</h4><p>📞 ${d.phone} · ${d.vehicle_plate||''}</p></div>
+                    <span class="status ${d.is_available ? 'status-active' : 'status-idle'}">${d.is_available ? '✅ متاح' : '⏳ مشغول'}</span>
+                </div>
+            `).join('');
+        }
+
+        function renderMarkers(drivers) {
+            markersGroup.clearLayers();
+            drivers.forEach(d => {
+                if (d.current_latitude && d.current_longitude) {
+                    L.marker([d.current_latitude, d.current_longitude])
+                        .addTo(markersGroup)
+                        .bindPopup('<b>' + d.name + '</b><br>📞 ' + d.phone + '<br>' + (d.is_available ? '✅ متاح' : '⏳ مشغول'));
+                }
+            });
+        }
+
+        loadDrivers();
+        setInterval(loadDrivers, 10000);
+
+// تحديث مباشر كل 5 ثواني
+function updateLivePositions() {
+    const drivers = document.querySelectorAll('.driver-marker');
+    drivers.forEach(marker => {
+        const lat = parseFloat(marker.dataset.lat) + (Math.random() - 0.5) * 0.001;
+        const lng = parseFloat(marker.dataset.lng) + (Math.random() - 0.5) * 0.001;
+        marker.dataset.lat = lat;
+        marker.dataset.lng = lng;
+    });
+}
+setInterval(updateLivePositions, 5000);    </script>
+</body>
+</html>

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#007A3D"><title>المنشأة - سوريا الإلكترونية</title>
+    <style>
+        :root { --primary: #007A3D; --primary-light: #00B359; --white: #FFFFFF; --bg: #F0F4F0; --text: #1A1A1A; --text-secondary: #6C757D; --gold: #D4AF37; --red: #CE1126; --glass-bg: rgba(255,255,255,0.7); --glass-shadow: 0 4px 16px rgba(0,0,0,0.06); --radius: 14px; --radius-lg: 18px; --font: 'Segoe UI', 'Noto Sans Arabic', Tahoma, sans-serif; }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family: var(--font); background: var(--bg); color: var(--text); direction: rtl; padding: 15px; max-width: 520px; margin: 0 auto; padding-bottom: 100px; }
+        a { text-decoration:none; color:inherit; }
+        .glass { background: var(--glass-bg); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.5); box-shadow: var(--glass-shadow); border-radius: var(--radius); }
+        .header { display: flex; align-items: center; gap: 12px; padding: 10px 0 15px; }
+        .back-btn { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; cursor: pointer; }
+        .page-title { font-size: 20px; font-weight: 700; flex: 1; }
+        .cover-img { width: 100%; height: 160px; border-radius: var(--radius-lg); background: linear-gradient(135deg,#E8F5E9,#C8E6C9); display: flex; align-items: center; justify-content: center; font-size: 48px; margin-bottom: 15px; background-size: cover; background-position: center; }
+        .section-title { font-size: 16px; font-weight: 700; margin: 15px 0 10px 0; }
+        .menu-item { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: var(--radius); margin-bottom: 8px; }
+        .menu-icon { width: 44px; height: 44px; border-radius: 12px; background: #E8F5E9; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+        .menu-info { flex: 1; } .menu-info h4 { font-size: 14px; font-weight: 600; } .menu-info p { font-size: 12px; color: var(--text-secondary); }
+        .menu-price { font-size: 15px; font-weight: 700; color: var(--primary); }
+        .info-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+        .info-chip { padding: 8px 14px; border-radius: 20px; font-size: 12px; }
+        .loading { text-align: center; padding: 30px; color: var(--text-secondary); }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="javascript:history.back()" class="back-btn glass">←</a>
+        <div class="page-title" id="bizName">تحميل...</div>
+    </div>
+    <div class="cover-img" id="coverImg">🏪</div>
+    <div id="content"><div class="loading">⏳ جاري التحميل...</div></div>
+
+    <script>
+        const API = '/api';
+        const params = new URLSearchParams(window.location.search);
+        const bizId = params.get('id');
+
+        async function load() {
+            if (!bizId) return;
+            try {
+                const res = await fetch(API + '/businesses/' + bizId);
+                const data = await res.json();
+                if (!data.success) { document.getElementById('content').innerHTML = '<p style="text-align:center;">❌ غير موجود</p>'; return; }
+                const b = data.data;
+                document.getElementById('bizName').textContent = b.name_ar;
+                document.title = b.name_ar;
+                document.getElementById('coverImg').style.backgroundImage = b.logo ? 'url(' + b.logo + ')' : '';
+                document.getElementById('coverImg').textContent = b.logo ? '' : '🏪';
+
+                let html = '';
+                html += '<p style="color:var(--text-secondary);margin-bottom:8px;">' + (b.description_ar || '') + '</p>';
+                html += '<div style="color:var(--gold);font-weight:700;margin-bottom:8px;">⭐ ' + (b.average_rating || 0).toFixed(1) + ' (' + (b.total_ratings || 0) + ' تقييم)</div>';
+                html += '<div class="info-row">';
+                if (b.phone) html += '<a href="tel:' + b.phone + '" class="info-chip glass">📞 ' + b.phone + '</a>';
+                if (b.delivery_available) html += '<span class="info-chip glass">🛵 توصيل متاح</span>';
+                html += '</div>';
+
+                const menu = data.data.menu || [];
+                html += '<div class="section-title">📋 قائمة الطعام</div>';
+                if (menu.length > 0) {
+                    menu.forEach(item => {
+                        html += '<div class="menu-item glass"><div class="menu-icon">🍽️</div><div class="menu-info"><h4>' + item.name_ar + '</h4><p>' + (item.description_ar || '') + '</p></div><div class="menu-price">' + (item.price || 0).toLocaleString() + ' ل.س</div></div>';
+                    });
+                } else { html += '<p style="text-align:center;color:var(--text-secondary);">لا توجد أصناف</p>'; }
+
+                document.getElementById('content').innerHTML = html;
+            } catch(e) { document.getElementById('content').innerHTML = '<p style="text-align:center;">❌ خطأ</p>'; }
+        }
+
+        load();
+    </script>
+</body>
+</html>

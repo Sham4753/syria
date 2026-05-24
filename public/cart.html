@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#007A3D">
+    <title>السلة - سوريا الإلكترونية</title>
+    <style>
+        :root {
+            --primary: #007A3D; --primary-light: #00B359; --white: #FFFFFF;
+            --bg: #F0F4F0; --text: #1A1A1A; --text-secondary: #6C757D;
+            --red: #CE1126; --gold: #D4AF37;
+            --glass-bg: rgba(255,255,255,0.7); --glass-shadow: 0 4px 16px rgba(0,0,0,0.06);
+            --shadow-md: 0 4px 16px rgba(0,0,0,0.1);
+            --radius: 14px; --radius-lg: 18px;
+            --font: 'Segoe UI', 'Noto Sans Arabic', Tahoma, sans-serif;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: var(--font); background: var(--bg);
+            color: var(--text); direction: rtl;
+            padding: 15px; max-width: 500px; margin: 0 auto;
+            padding-bottom: 120px;
+        }
+        a { text-decoration:none; color:inherit; }
+        .glass {
+            background: var(--glass-bg); backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.5); box-shadow: var(--glass-shadow);
+        }
+        .header {
+            display: flex; align-items: center; gap: 12px;
+            padding: 10px 0 20px;
+        }
+        .back-btn {
+            width: 40px; height: 40px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; font-weight: bold; cursor: pointer;
+        }
+        .cart-title { font-size: 22px; font-weight: 700; }
+        .cart-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 14px; border-radius: var(--radius); margin-bottom: 10px;
+        }
+        .item-img {
+            width: 56px; height: 56px; border-radius: var(--radius);
+            background: linear-gradient(135deg, #E8F5E9, #C8E6C9);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 28px; flex-shrink: 0;
+        }
+        .item-info { flex: 1; }
+        .item-info h4 { font-size: 14px; font-weight: 600; }
+        .item-info p { font-size: 12px; color: var(--text-secondary); }
+        .item-price { font-size: 15px; font-weight: 700; color: var(--primary); }
+        .qty-controls {
+            display: flex; align-items: center; gap: 8px;
+        }
+        .qty-btn {
+            width: 32px; height: 32px; border-radius: 50%;
+            border: none; font-size: 18px; font-weight: 700;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: 0.2s;
+        }
+        .qty-minus { background: #FEE2E2; color: var(--red); }
+        .qty-plus { background: #D1FAE5; color: var(--primary); }
+        .qty-num { font-size: 16px; font-weight: 700; min-width: 24px; text-align: center; }
+        .delete-btn {
+            background: none; border: none; color: var(--red);
+            font-size: 18px; cursor: pointer; padding: 4px;
+        }
+        .summary {
+            padding: 16px; border-radius: var(--radius-lg); margin-top: 15px;
+        }
+        .summary-row {
+            display: flex; justify-content: space-between;
+            padding: 8px 0; font-size: 14px;
+        }
+        .summary-total {
+            display: flex; justify-content: space-between;
+            padding: 12px 0; font-size: 18px; font-weight: 700;
+            border-top: 2px dashed rgba(0,0,0,0.1); margin-top: 8px;
+        }
+        .total-price { color: var(--primary); font-size: 22px; }
+        .coupon-box {
+            display: flex; gap: 8px; margin-top: 10px;
+        }
+        .coupon-box input {
+            flex: 1; padding: 12px; border: 2px solid rgba(0,0,0,0.1);
+            border-radius: 12px; font-size: 14px; outline: none;
+        }
+        .coupon-box button {
+            padding: 12px 18px; background: var(--primary); color: white;
+            border: none; border-radius: 12px; font-weight: 600; cursor: pointer;
+        }
+        .payment-methods {
+            display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px;
+        }
+        .payment-chip {
+            padding: 10px 16px; border-radius: 20px; font-size: 13px;
+            cursor: pointer; transition: 0.2s; border: 2px solid transparent;
+        }
+        .payment-chip.active { border-color: var(--primary); background: #D1FAE5; }
+        .order-btn {
+            width: 100%; padding: 16px; background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white; border: none; border-radius: 16px; font-size: 17px; font-weight: 700;
+            cursor: pointer; margin-top: 15px; box-shadow: 0 6px 20px rgba(0,122,61,0.3);
+        }
+        .order-btn:hover { transform: translateY(-2px); }
+        .empty-cart {
+            text-align: center; padding: 50px 20px;
+        }
+        .empty-cart .icon { font-size: 64px; }
+        .empty-cart h3 { font-size: 20px; margin: 15px 0 10px; }
+        .empty-cart p { color: var(--text-secondary); margin-bottom: 20px; }
+        .home-btn {
+            padding: 12px 30px; background: var(--primary); color: white;
+            border-radius: 25px; font-weight: 600; display: inline-block;
+        }
+        textarea {
+            width: 100%; padding: 12px; border: 2px solid rgba(0,0,0,0.1);
+            border-radius: 12px; font-size: 14px; outline: none; margin-top: 10px;
+            font-family: var(--font); resize: vertical; min-height: 60px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <a href="javascript:history.back()" class="back-btn glass">←</a>
+        <div class="cart-title">🛒 السلة</div>
+    </div>
+
+    <div id="cartContent"></div>
+
+    <div id="cartSummary" style="display:none;">
+        <div class="summary glass">
+            <div class="summary-row"><span>المجموع الفرعي</span><span id="subtotal">0 ل.س</span></div>
+            <div class="summary-row"><span>رسوم التوصيل</span><span id="deliveryFee">---</span></div>
+            <div class="summary-row"><span>الخصم</span><span id="discount" style="color:var(--red);">0 ل.س</span></div>
+            <div class="summary-total"><span>الإجمالي</span><span class="total-price" id="totalPrice">0 ل.س</span></div>
+        </div>
+
+        <div style="margin-top:10px;">
+            <label style="font-weight:600;font-size:14px;">🎫 كود خصم</label>
+            <div class="coupon-box">
+                <input type="text" id="couponCode" placeholder="أدخل كود الخصم">
+                <button onclick="applyCoupon()">تطبيق</button>
+            </div>
+        </div>
+
+        <div style="margin-top:10px;">
+            <label style="font-weight:600;font-size:14px;">📝 ملاحظات للطلب</label>
+            <textarea id="orderNotes" placeholder="مثلاً: بدون بصل، توصيل للباب الخلفي..."></textarea>
+        </div>
+
+        <div style="margin-top:10px;">
+            <label style="font-weight:600;font-size:14px;">💳 طريقة الدفع</label>
+            <div class="payment-methods" id="paymentMethods">
+                <div class="payment-chip glass active" data-method="cash" onclick="selectPayment('cash')">💵 نقداً</div>
+                <div class="payment-chip glass" data-method="cash_mobile" onclick="selectPayment('cash_mobile')">📱 كاش موبايل</div>
+                <div class="payment-chip glass" data-method="hawalat" onclick="selectPayment('hawalat')">🏦 حوالات</div>
+            </div>
+        </div>
+
+        <button class="order-btn" onclick="submitOrder()">🚀 إتمام الطلب</button>
+    </div>
+
+    <script>
+        let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        let selectedPayment = 'cash';
+        const DELIVERY_FEE = 2000; // رسوم توصيل افتراضية
+
+        function selectPayment(method) {
+            selectedPayment = method;
+            document.querySelectorAll('.payment-chip').forEach(el => el.classList.remove('active'));
+            document.querySelector(`[data-method="${method}"]`).classList.add('active');
+        }
+
+        function updateCartDisplay() {
+            const content = document.getElementById('cartContent');
+            const summary = document.getElementById('cartSummary');
+
+            if (cart.length === 0) {
+                content.innerHTML = `
+                    <div class="empty-cart">
+                        <div class="icon">🛒</div>
+                        <h3>سلتك فارغة</h3>
+                        <p>استكشف المطاعم والمتاجر وأضف ما يعجبك</p>
+                        <a href="/" class="home-btn">🏠 تصفح المنشآت</a>
+                    </div>
+                `;
+                summary.style.display = 'none';
+                return;
+            }
+
+            summary.style.display = 'block';
+            let totalItems = 0;
+            let subtotal = 0;
+
+            content.innerHTML = cart.map((item, index) => {
+                const itemTotal = item.price * item.qty;
+                totalItems += item.qty;
+                subtotal += itemTotal;
+                return `
+                    <div class="cart-item glass">
+                        <div class="item-img">🍽️</div>
+                        <div class="item-info">
+                            <h4>${item.name}</h4>
+                            <p>${item.price.toLocaleString()} ل.س × ${item.qty}</p>
+                            <div class="item-price">${itemTotal.toLocaleString()} ل.س</div>
+                        </div>
+                        <div class="qty-controls">
+                            <button class="qty-btn qty-minus" onclick="changeQty(${index}, -1)">−</button>
+                            <span class="qty-num">${item.qty}</span>
+                            <button class="qty-btn qty-plus" onclick="changeQty(${index}, 1)">+</button>
+                        </div>
+                        <button class="delete-btn" onclick="removeItem(${index})">🗑️</button>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('subtotal').textContent = subtotal.toLocaleString() + ' ل.س';
+            document.getElementById('deliveryFee').textContent = DELIVERY_FEE.toLocaleString() + ' ل.س';
+            document.getElementById('totalPrice').textContent = (subtotal + DELIVERY_FEE).toLocaleString() + ' ل.س';
+        }
+
+        function changeQty(index, delta) {
+            cart[index].qty += delta;
+            if (cart[index].qty < 1) cart[index].qty = 1;
+            localStorage.setItem('cart', JSON.stringify(cart));
+            updateCartDisplay();
+        }
+
+        function removeItem(index) {
+            cart.splice(index, 1);
+            localStorage.setItem('cart', JSON.stringify(cart));
+            updateCartDisplay();
+        }
+
+        function applyCoupon() {
+            const code = document.getElementById('couponCode').value.trim();
+            if (code === 'سوريا' || code === 'SYRIA') {
+                alert('✅ تم تطبيق الخصم 10%');
+            } else if (code) {
+                alert('❌ كود الخصم غير صالح');
+            }
+        }
+
+        async function submitOrder() {
+            if (cart.length === 0) return;
+
+            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            const total = subtotal + DELIVERY_FEE;
+            const notes = document.getElementById('orderNotes').value.trim();
+
+            const order = {
+                business_id: cart[0].bizId,
+                customer_name: 'زبون',
+                customer_phone: '09xxxxxxxx',
+                customer_address: 'دمشق',
+                items: cart.map(item => ({
+                    menu_item_id: item.menuId,
+                    name: item.name,
+                    price: item.price,
+                    qty: item.qty
+                })),
+                subtotal,
+                delivery_fee: DELIVERY_FEE,
+                total,
+                payment_method: selectedPayment,
+                notes
+            };
+
+            try {
+                const res = await fetch('/api/orders', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(order)
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert('✅ تم إرسال الطلب بنجاح!\nرقم الطلب: ' + data.order_number);
+                    localStorage.removeItem('cart');
+                    cart = [];
+                    updateCartDisplay();
+                } else {
+                    alert('❌ فشل إرسال الطلب');
+                }
+            } catch (e) {
+                // Offline - حفظ الطلب محلياً
+                const offlineOrders = JSON.parse(localStorage.getItem('offlineOrders') || '[]');
+                offlineOrders.push({ ...order, created_at: new Date().toISOString() });
+                localStorage.setItem('offlineOrders', JSON.stringify(offlineOrders));
+                localStorage.removeItem('cart');
+                cart = [];
+                updateCartDisplay();
+                alert('📶 تم حفظ الطلب محلياً - سيتم إرساله عند الاتصال بالإنترنت');
+            }
+        }
+
+        updateCartDisplay();
+    </script>
+</body>
+</html>

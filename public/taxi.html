@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#007A3D">
+    <title>طلب تكسي - سوريا الإلكترونية</title>
+    <style>
+        :root {
+            --primary: #007A3D; --primary-light: #00B359; --white: #FFFFFF;
+            --bg: #F0F4F0; --text: #1A1A1A; --text-secondary: #6C757D;
+            --gold: #D4AF37;
+            --glass-bg: rgba(255,255,255,0.7); --glass-shadow: 0 4px 16px rgba(0,0,0,0.06);
+            --shadow: 0 2px 8px rgba(0,0,0,0.06); --shadow-md: 0 4px 16px rgba(0,0,0,0.1);
+            --radius: 14px; --radius-lg: 18px;
+            --font: 'Segoe UI', 'Noto Sans Arabic', Tahoma, sans-serif;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: var(--font); background: var(--bg);
+            color: var(--text); direction: rtl;
+            padding: 15px; max-width: 500px; margin: 0 auto;
+        }
+        a { text-decoration:none; color:inherit; }
+        .glass {
+            background: var(--glass-bg); backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.5); box-shadow: var(--glass-shadow);
+        }
+        .header {
+            display: flex; align-items: center; gap: 12px;
+            padding: 10px 0 15px;
+        }
+        .back-btn {
+            width: 40px; height: 40px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; font-weight: bold; cursor: pointer;
+        }
+        .page-title { font-size: 20px; font-weight: 700; }
+        .map-area {
+            background: linear-gradient(135deg, #E8F5E9, #C8E6C9);
+            border-radius: var(--radius-lg); height: 200px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 48px; margin-bottom: 15px; position: relative;
+        }
+        .map-area .pin { position: absolute; font-size: 32px; }
+        .pin.from { top: 60%; right: 30%; }
+        .pin.to { top: 20%; left: 25%; }
+        .address-box {
+            display: flex; align-items: center; gap: 10px;
+            padding: 14px; border-radius: var(--radius-lg); margin-bottom: 10px;
+        }
+        .address-dot {
+            width: 16px; height: 16px; border-radius: 50%; flex-shrink: 0;
+        }
+        .address-dot.from { background: var(--primary); }
+        .address-dot.to { background: #CE1126; }
+        .address-text { flex: 1; font-size: 14px; }
+        .car-types {
+            display: flex; gap: 8px; overflow-x: auto; padding: 5px 0 15px; scrollbar-width: none;
+        }
+        .car-card {
+            flex: 0 0 auto; text-align: center; padding: 14px 16px;
+            border-radius: var(--radius-lg); min-width: 90px; cursor: pointer;
+            transition: 0.2s; border: 2px solid transparent;
+        }
+        .car-card:hover, .car-card.active { border-color: var(--primary); background: #D1FAE5; }
+        .car-icon { font-size: 32px; }
+        .car-name { font-size: 12px; font-weight: 600; }
+        .car-price { font-size: 11px; color: var(--primary); font-weight: 700; }
+        .order-btn {
+            width: 100%; padding: 16px; background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white; border: none; border-radius: 16px; font-size: 17px; font-weight: 700;
+            cursor: pointer; box-shadow: 0 6px 20px rgba(0,122,61,0.3);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <a href="/" class="back-btn glass">←</a>
+        <div class="page-title">🚗 طلب تكسي</div>
+    </div>
+
+    <div class="map-area">
+        🗺️
+        <div class="pin from">📍</div>
+        <div class="pin to">📌</div>
+    </div>
+
+    <div class="address-box glass">
+        <div class="address-dot from"></div>
+        <div class="address-text">📍 موقعك الحالي - دمشق</div>
+    </div>
+    <div class="address-box glass">
+        <div class="address-dot to"></div>
+        <input type="text" id="destination" placeholder="أين تريد الذهاب؟" style="flex:1;border:none;outline:none;font-size:14px;background:transparent;font-family:var(--font);">
+    </div>
+
+    <div style="font-weight:700;margin-bottom:8px;">🚘 نوع المركبة</div>
+    <div class="car-types" id="carTypes">
+        <div class="car-card glass active" data-type="economy" data-price="5000" onclick="selectCar(this)">
+            <div class="car-icon">🚗</div>
+            <div class="car-name">اقتصادي</div>
+            <div class="car-price">5,000 ل.س</div>
+        </div>
+        <div class="car-card glass" data-type="comfort" data-price="8000" onclick="selectCar(this)">
+            <div class="car-icon">🚙</div>
+            <div class="car-name">مريح</div>
+            <div class="car-price">8,000 ل.س</div>
+        </div>
+        <div class="car-card glass" data-type="van" data-price="12000" onclick="selectCar(this)">
+            <div class="car-icon">🚐</div>
+            <div class="car-name">فان</div>
+            <div class="car-price">12,000 ل.س</div>
+        </div>
+    </div>
+
+    <button class="order-btn" onclick="orderTaxi()">🚀 اطلب التكسي الآن</button>
+
+    <script>
+        let selectedCar = 'economy';
+        let selectedPrice = 5000;
+
+        function selectCar(el) {
+            document.querySelectorAll('.car-card').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+            selectedCar = el.dataset.type;
+            selectedPrice = parseInt(el.dataset.price);
+        }
+
+        function orderTaxi() {
+            const dest = document.getElementById('destination').value.trim();
+            if (!dest) { alert('الرجاء إدخال الوجهة'); return; }
+            alert('✅ تم طلب التكسي!\nالنوع: ' + selectedCar + '\nالسعر: ' + selectedPrice.toLocaleString() + ' ل.س\nالوجهة: ' + dest);
+            window.location.href = '/track.html';
+        }
+    </script>
+</body>
+</html>

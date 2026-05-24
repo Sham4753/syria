@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#007A3D">
+    <title>تسجيل منشأة - سوريا الإلكترونية</title>
+    <style>
+        :root {
+            --primary: #007A3D; --primary-light: #00B359; --white: #FFFFFF;
+            --bg: #F0F4F0; --text: #1A1A1A; --text-secondary: #6C757D;
+            --glass-bg: rgba(255,255,255,0.7); --glass-shadow: 0 4px 16px rgba(0,0,0,0.06);
+            --radius: 14px; --radius-lg: 18px;
+            --font: 'Segoe UI', 'Noto Sans Arabic', Tahoma, sans-serif;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: var(--font); background: var(--bg);
+            color: var(--text); direction: rtl;
+            padding: 15px; max-width: 500px; margin: 0 auto;
+        }
+        a { text-decoration:none; color:inherit; }
+        .glass {
+            background: var(--glass-bg); backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.5); box-shadow: var(--glass-shadow);
+        }
+        .header {
+            display: flex; align-items: center; gap: 12px;
+            padding: 10px 0 20px;
+        }
+        .back-btn {
+            width: 40px; height: 40px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; font-weight: bold; cursor: pointer;
+        }
+        .page-title { font-size: 22px; font-weight: 700; }
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 14px; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 14px; border-radius: var(--radius);
+            border: 2px solid rgba(0,0,0,0.1); font-size: 14px; outline: none;
+            font-family: var(--font); background: var(--white);
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            border-color: var(--primary);
+        }
+        .logo-upload {
+            width: 100px; height: 100px; border-radius: 50%;
+            background: #E8F5E9; display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 15px; font-size: 40px; cursor: pointer;
+            border: 3px dashed var(--primary);
+        }
+        .submit-btn {
+            width: 100%; padding: 16px; background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white; border: none; border-radius: 16px; font-size: 17px; font-weight: 700;
+            cursor: pointer; margin-top: 10px;
+        }
+        .login-link { text-align: center; margin-top: 15px; font-size: 14px; color: var(--text-secondary); }
+        .login-link a { color: var(--primary); font-weight: 600; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <a href="/" class="back-btn glass">←</a>
+        <div class="page-title">📝 تسجيل منشأة جديدة</div>
+    </div>
+
+    <div class="logo-upload" onclick="alert('📸 سيتم رفع الشعار لاحقاً')">📷</div>
+
+    <div class="form-group">
+        <label>اسم المنشأة *</label>
+        <input type="text" id="name_ar" placeholder="مثلاً: مطعم الياسمين">
+    </div>
+
+    <div class="form-group">
+        <label>الاسم بالإنجليزي</label>
+        <input type="text" id="name_en" placeholder="Jasmine Restaurant">
+    </div>
+
+    <div class="form-group">
+        <label>التصنيف *</label>
+        <select id="category">
+            <option value="">اختر التصنيف</option>
+            <option value="1">🍽️ مطاعم ومقاهي</option>
+            <option value="3">🏥 صحة وطب</option>
+            <option value="11">🏥 مشافي</option>
+            <option value="12">💊 صيدليات</option>
+            <option value="2">🛍️ تسوق وبيع</option>
+            <option value="4">🚌 نقل ومواصلات</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>المحافظة *</label>
+        <select id="region">
+            <option value="">اختر المحافظة</option>
+            <option value="1">دمشق</option>
+            <option value="2">حلب</option>
+            <option value="3">حمص</option>
+            <option value="4">اللاذقية</option>
+            <option value="5">حماة</option>
+            <option value="6">طرطوس</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>رقم الجوال *</label>
+        <input type="tel" id="phone" placeholder="09xxxxxxxx">
+    </div>
+
+    <div class="form-group">
+        <label>وصف المنشأة</label>
+        <textarea id="description" rows="3" placeholder="اكتب وصفاً مختصراً عن منشأتك..."></textarea>
+    </div>
+
+    <div class="form-group">
+        <label>كلمة المرور *</label>
+        <input type="password" id="password" placeholder="أدخل كلمة مرور">
+    </div>
+
+    <button class="submit-btn" onclick="register()">🚀 تسجيل المنشأة</button>
+
+    <div class="login-link">
+        عندك حساب؟ <a href="/login.html">تسجيل الدخول</a>
+    </div>
+
+    <script>
+        async function register() {
+            const name_ar = document.getElementById('name_ar').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const category = document.getElementById('category').value;
+            const region = document.getElementById('region').value;
+
+            if (!name_ar || !phone || !password || !category || !region) {
+                alert('الرجاء ملء جميع الحقول المطلوبة');
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/businesses/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name_ar,
+                        name_en: document.getElementById('name_en').value.trim(),
+                        phone,
+                        password,
+                        sub_category_id: category,
+                        region_id: region,
+                        description_ar: document.getElementById('description').value.trim()
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert('✅ تم تسجيل المنشأة بنجاح!\nرقم المنشأة: ' + data.business_id);
+                    window.location.href = '/login.html';
+                } else {
+                    alert('❌ ' + (data.message || 'فشل التسجيل'));
+                }
+            } catch (e) {
+                alert('❌ خطأ في الاتصال');
+            }
+        }
+    </script>
+</body>
+</html>

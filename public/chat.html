@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#007A3D">
+    <title>المساعد الذكي - سوريا الإلكترونية</title>
+    <style>
+        :root {
+            --primary: #007A3D; --primary-light: #00B359; --white: #FFFFFF;
+            --bg: #F0F4F0; --text: #1A1A1A; --text-secondary: #6C757D;
+            --glass-bg: rgba(255,255,255,0.7); --glass-shadow: 0 4px 16px rgba(0,0,0,0.06);
+            --radius: 14px; --radius-lg: 18px;
+            --font: 'Segoe UI', 'Noto Sans Arabic', Tahoma, sans-serif;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: var(--font); background: var(--bg);
+            color: var(--text); direction: rtl;
+            padding: 15px; max-width: 500px; margin: 0 auto;
+            height: 100vh; display: flex; flex-direction: column;
+        }
+        a { text-decoration:none; color:inherit; }
+        .glass {
+            background: var(--glass-bg); backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.5); box-shadow: var(--glass-shadow);
+        }
+        .header {
+            display: flex; align-items: center; gap: 12px;
+            padding: 10px 0 15px; flex-shrink: 0;
+        }
+        .back-btn {
+            width: 40px; height: 40px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; font-weight: bold; cursor: pointer;
+        }
+        .page-title { font-size: 20px; font-weight: 700; }
+        .chat-area {
+            flex: 1; overflow-y: auto; padding: 10px 0;
+            display: flex; flex-direction: column; gap: 8px;
+        }
+        .msg {
+            padding: 12px 16px; border-radius: 16px; max-width: 85%;
+            font-size: 14px; line-height: 1.5; animation: fadeIn 0.3s ease;
+        }
+        .msg.user { background: var(--primary); color: white; align-self: flex-end; }
+        .msg.bot { background: var(--glass-bg); align-self: flex-start; }
+        .msg.bot a { color: var(--primary); font-weight: 600; text-decoration: underline; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+        .input-area {
+            display: flex; gap: 8px; padding: 10px 0; flex-shrink: 0;
+        }
+        .input-area input {
+            flex: 1; padding: 14px; border-radius: 25px; border: 2px solid rgba(0,0,0,0.1);
+            font-size: 14px; outline: none; font-family: var(--font);
+        }
+        .input-area button {
+            width: 50px; height: 50px; border-radius: 50%;
+            background: var(--primary); color: white; border: none;
+            font-size: 22px; cursor: pointer; transition: 0.2s;
+        }
+        .input-area button:hover { background: var(--primary-light); }
+        .suggestions {
+            display: flex; gap: 6px; flex-wrap: wrap; padding: 5px 0; flex-shrink: 0;
+        }
+        .suggestion {
+            padding: 8px 14px; border-radius: 20px; font-size: 12px;
+            cursor: pointer; transition: 0.2s; white-space: nowrap;
+        }
+        .suggestion:hover { background: var(--primary); color: white; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <a href="/" class="back-btn glass">←</a>
+        <div class="page-title">🤖 المساعد الذكي</div>
+    </div>
+
+    <div class="chat-area" id="chatArea">
+        <div class="msg bot">
+            👋 مرحباً! أنا مساعد سوريا الإلكترونية.<br>
+            اسألني عن أي شيء: مطاعم، مشافي، صيدليات، أو اكتب اسم محافظة.
+        </div>
+    </div>
+
+    <div class="suggestions" id="suggestions">
+        <div class="suggestion glass" onclick="sendMsg('أفضل مطاعم دمشق')">🍽️ أفضل مطاعم دمشق</div>
+        <div class="suggestion glass" onclick="sendMsg('مشافي قريبة')">🏥 مشافي قريبة</div>
+        <div class="suggestion glass" onclick="sendMsg('عروض اليوم')">🎫 عروض اليوم</div>
+        <div class="suggestion glass" onclick="sendMsg('كود خصم')">💳 كود خصم</div>
+    </div>
+
+    <div class="input-area">
+        <input type="text" id="userInput" placeholder="اكتب سؤالك هنا..." onkeypress="if(event.key==='Enter')sendMsg()">
+        <button onclick="sendMsg()">➤</button>
+    </div>
+
+    <script>
+        const chatArea = document.getElementById('chatArea');
+        const API = '/api';
+
+        function addMsg(text, type) {
+            const div = document.createElement('div');
+            div.className = 'msg ' + type;
+            div.innerHTML = text;
+            chatArea.appendChild(div);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        async function sendMsg(msg) {
+            const input = document.getElementById('userInput');
+            const query = msg || input.value.trim();
+            if (!query) return;
+
+            addMsg(query, 'user');
+            if (!msg) input.value = '';
+
+            // تحليل السؤال محلياً
+            const response = await analyzeQuery(query);
+            addMsg(response, 'bot');
+        }
+
+        async function analyzeQuery(query) {
+            const q = query.toLowerCase();
+
+            // عروض وكوبونات
+            if (q.includes('عرض') || q.includes('خصم') || q.includes('كود') || q.includes('كوبون')) {
+                try {
+                    const res = await fetch(`${API}/coupons`);
+                    const data = await res.json();
+                    if (data.success && data.data.length > 0) {
+                        return '🎫 <b>الكوبونات المتاحة:</b><br>' + data.data.map(c => 
+                            `• <b>${c.code}</b>: ${c.description_ar || ''} (${c.discount_percent}% خصم) <a href="/cart.html?coupon=${c.code}">🛒 استخدمه</a>`
+                        ).join('<br>');
+                    }
+                } catch (e) {}
+                return '🎫 <a href="/offers.html">اضغط هنا لعرض كل العروض والكوبونات</a>';
+            }
+
+            // محافظات
+            const regions = ['دمشق', 'حلب', 'حمص', 'اللاذقية', 'حماة', 'طرطوس', 'دير الزور', 'إدلب', 'الحسكة', 'الرقة', 'درعا', 'السويداء', 'القنيطرة', 'ريف دمشق'];
+            for (const region of regions) {
+                if (q.includes(region)) {
+                    try {
+                        const res = await fetch(`${API}/regions?admin_level_id=1`);
+                        const data = await res.json();
+                        if (data.success) {
+                            const found = data.data.find(r => r.name_ar.includes(region));
+                            if (found) return `📍 <b>${found.name_ar}</b><br>👥 السكان: ${(found.population/1000000).toFixed(1)} مليون<br><a href="/governorate.html?id=${found.id}">🔗 تصفح المنشآت في ${found.name_ar}</a>`;
+                        }
+                    } catch (e) {}
+                    return `📍 <a href="/governorate.html">تصفح المحافظات</a>`;
+                }
+            }
+
+            // مطاعم
+            if (q.includes('مطعم') || q.includes('أكل') || q.includes('طعام') || q.includes('فطور') || q.includes('غداء')) {
+                try {
+                    const res = await fetch(`${API}/businesses?sub_category_id=1&limit=5`);
+                    const data = await res.json();
+                    if (data.success && data.data.length > 0) {
+                        return '🍽️ <b>أفضل المطاعم:</b><br>' + data.data.map(b => 
+                            `• <b>${b.name_ar}</b> ⭐${(b.average_rating||0).toFixed(1)} <a href="/business.html?id=${b.id}">🔗 تصفح</a>`
+                        ).join('<br>');
+                    }
+                } catch (e) {}
+            }
+
+            // مشافي
+            if (q.includes('مشفى') || q.includes('مستشفى') || q.includes('طبيب') || q.includes('صحة')) {
+                try {
+                    const res = await fetch(`${API}/businesses?sub_category_id=11&limit=5`);
+                    const data = await res.json();
+                    if (data.success && data.data.length > 0) {
+                        return '🏥 <b>المشافي:</b><br>' + data.data.map(b => 
+                            `• <b>${b.name_ar}</b> ⭐${(b.average_rating||0).toFixed(1)} <a href="/business.html?id=${b.id}">🔗 تصفح</a>`
+                        ).join('<br>');
+                    }
+                } catch (e) {}
+            }
+
+            // صيدليات
+            if (q.includes('صيدلية') || q.includes('دواء') || q.includes('علاج')) {
+                try {
+                    const res = await fetch(`${API}/businesses?sub_category_id=12&limit=5`);
+                    const data = await res.json();
+                    if (data.success && data.data.length > 0) {
+                        return '💊 <b>الصيدليات:</b><br>' + data.data.map(b => 
+                            `• <b>${b.name_ar}</b> ⭐${(b.average_rating||0).toFixed(1)} <a href="/business.html?id=${b.id}">🔗 تصفح</a>`
+                        ).join('<br>');
+                    }
+                } catch (e) {}
+            }
+
+            // مساعدة
+            if (q.includes('مساعدة') || q.includes('مرحبا') || q.includes('اهلا') || q.includes('السلام')) {
+                return '👋 أهلاً بك!<br>أنا مساعد سوريا الإلكترونية. أسألني:<br>• "مطاعم في دمشق"<br>• "مشافي قريبة"<br>• "عروض اليوم"<br>• "كود خصم"<br>• اسم أي محافظة';
+            }
+
+            // بحث عام
+            return `🔍 <a href="/search?q=${encodeURIComponent(query)}">اضغط هنا للبحث عن "${query}" في كل سوريا</a>`;
+        }
+    </script>
+</body>
+</html>

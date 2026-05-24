@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#007A3D">
+    <title>توليد الأكواد - سوريا الإلكترونية</title>
+    <style>
+        :root {
+            --primary: #007A3D; --primary-light: #00B359; --white: #FFFFFF;
+            --bg: #F0F4F0; --text: #1A1A1A; --text-secondary: #6C757D;
+            --gold: #D4AF37; --red: #CE1126;
+            --glass-bg: rgba(255,255,255,0.7); --glass-shadow: 0 4px 16px rgba(0,0,0,0.06);
+            --radius: 14px; --radius-lg: 18px;
+            --font: 'Segoe UI', 'Noto Sans Arabic', Tahoma, sans-serif;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: var(--font); background: var(--bg);
+            color: var(--text); direction: rtl;
+            padding: 15px; max-width: 500px; margin: 0 auto;
+            padding-bottom: 100px;
+        }
+        a { text-decoration:none; color:inherit; }
+        .glass { background: var(--glass-bg); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.5); box-shadow: var(--glass-shadow); }
+        .page-title { font-size: 20px; font-weight: 700; padding: 10px 0 15px; }
+        .section-title { font-size: 16px; font-weight: 700; margin: 15px 0 10px 0; }
+        .form-group { margin-bottom: 10px; }
+        .form-group label { display: block; font-weight: 600; font-size: 13px; margin-bottom: 4px; }
+        .form-group input, .form-group select { width: 100%; padding: 11px; border-radius: var(--radius); border: 2px solid rgba(0,0,0,0.1); font-size: 14px; outline: none; font-family: var(--font); background: var(--white); }
+        .btn { padding: 12px 18px; border-radius: 20px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; width: 100%; text-align: center; margin-bottom: 8px; }
+        .btn-gold { background: var(--gold); color: white; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-danger { background: var(--red); color: white; width: auto; padding: 6px 12px; font-size: 11px; }
+        .code-box { padding: 16px; border-radius: var(--radius-lg); text-align: center; border: 2px dashed var(--primary); margin: 10px 0; }
+        .code-text { font-size: 22px; font-weight: 800; color: var(--primary); letter-spacing: 2px; margin: 8px 0; }
+        .stats { display: flex; gap: 8px; margin-bottom: 12px; }
+        .stat { flex: 1; padding: 12px; border-radius: var(--radius); text-align: center; }
+        .stat-num { font-size: 20px; font-weight: 700; color: var(--primary); }
+        .stat-lbl { font-size: 10px; color: var(--text-secondary); }
+        .list-item { display: flex; align-items: center; gap: 8px; padding: 10px; border-radius: var(--radius); margin-bottom: 4px; font-size: 12px; }
+        .tag { padding: 3px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; }
+        .tag-active { background: #D1FAE5; color: #065F46; }
+        .tag-used { background: #FEE2E2; color: #991B1B; }
+        .tag-pending { background: #FEF3C7; color: #92400E; }
+    </style>
+</head>
+<body>
+
+    <div class="page-title">🎫 توليد الأكواد</div>
+    <div id="content"></div>
+
+    <script>
+        const API = '/api';
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        if (user.role !== 'super') { document.body.innerHTML = '<div style="text-align:center;padding:50px;"><h3>❌ غير مصرح</h3><a href="/login.html">تسجيل الدخول</a></div>'; }
+
+        let codes = JSON.parse(localStorage.getItem('generatedCodes') || '[]');
+
+        function saveCodes() { localStorage.setItem('generatedCodes', JSON.stringify(codes)); }
+
+        function loadPage() {
+            const active = codes.filter(c => !c.used).length;
+            const used = codes.filter(c => c.used).length;
+            let html = '';
+            html += '<div class="stats"><div class="stat glass"><div class="stat-num">' + codes.length + '</div><div class="stat-lbl">مجموع الأكواد</div></div><div class="stat glass"><div class="stat-num">' + active + '</div><div class="stat-lbl">نشطة</div></div><div class="stat glass"><div class="stat-num">' + used + '</div><div class="stat-lbl">مستخدمة</div></div></div>';
+            html += '<div class="section-title">🎫 توليد كود جديد</div>';
+            html += '<div class="form-group"><label>المستوى</label><select id="codeLevel"><option value="governorate">🏛️ محافظ</option><option value="district">🏙️ مدير منطقة</option><option value="subdistrict">🏘️ مدير ناحية</option><option value="village">🏡 مدير قرية</option><option value="business">👤 صاحب منشأة</option></select></div>';
+            html += '<div class="form-group"><label>المنطقة</label><select id="codeRegion"><option value="1">دمشق</option><option value="2">حلب</option><option value="3">حمص</option><option value="4">اللاذقية</option><option value="5">حماة</option><option value="6">طرطوس</option><option value="7">دير الزور</option><option value="8">إدلب</option><option value="9">الحسكة</option><option value="10">الرقة</option><option value="11">درعا</option><option value="12">السويداء</option><option value="13">القنيطرة</option><option value="14">ريف دمشق</option></select></div>';
+            html += '<div class="form-group"><label>عدد الأكواد</label><select id="codeCount"><option value="1">1</option><option value="5">5</option><option value="10">10</option><option value="50">50</option></select></div>';
+            html += '<div class="form-group"><label>كلمة سر (اختياري)</label><input type="text" id="codePass" placeholder="اتركه فارغ لتوليد تلقائي"></div>';
+            html += '<div class="form-group"><label>ملاحظات</label><input type="text" id="codeNote" placeholder="ملاحظة عن الكود..."></div>';
+            html += '<button class="btn btn-gold" id="genBtn">🎫 توليد</button>';
+            html += '<div id="genResult"></div>';
+            html += '<div class="section-title">📋 سجل الأكواد</div><div id="codesList"></div>';
+            html += '<button class="btn btn-primary" onclick="exportCSV()">📥 تصدير CSV</button>';
+            html += '<button class="btn btn-danger" onclick="if(confirm(\'حذف كل الأكواد؟\')){codes=[];saveCodes();loadPage();}">🗑️ حذف الكل</button>';
+            document.getElementById('content').innerHTML = html;
+
+            document.getElementById('genBtn').onclick = function() {
+                const level = document.getElementById('codeLevel').value;
+                const region = document.getElementById('codeRegion').value;
+                const count = parseInt(document.getElementById('codeCount').value);
+                const pass = document.getElementById('codePass').value.trim();
+                const note = document.getElementById('codeNote').value.trim();
+                let resultHtml = '';
+                for (let i = 0; i < count; i++) {
+                    const code = 'SYR-' + level.toUpperCase() + '-' + region + '-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+                    const pwd = pass || Math.random().toString(36).substring(2, 10);
+                    codes.push({ code, level, region, password: pwd, note, used: false, date: new Date().toISOString().slice(0, 10) });
+                    resultHtml += '<div class="code-box glass"><strong>' + (count > 1 ? (i + 1) + '. ' : '') + '</strong><div class="code-text">' + code + '</div><p style="font-size:12px;">🔑 كلمة السر: ' + pwd + '</p><button class="btn btn-primary" style="width:auto;margin-top:5px;" onclick="navigator.clipboard.writeText(\'' + code + '\');alert(\'✅ تم النسخ\')">📋 نسخ</button></div>';
+                }
+                saveCodes();
+                document.getElementById('genResult').innerHTML = resultHtml;
+                loadCodesList();
+            };
+
+            loadCodesList();
+        }
+
+        function loadCodesList() {
+            if (codes.length === 0) {
+                document.getElementById('codesList').innerHTML = '<p style="text-align:center;color:var(--text-secondary);">لا توجد أكواد</p>';
+                return;
+            }
+            document.getElementById('codesList').innerHTML = codes.slice().reverse().map((c, i) => {
+                const idx = codes.length - 1 - i;
+                return '<div class="list-item glass"><span class="tag ' + (c.used ? 'tag-used' : 'tag-active') + '">' + (c.used ? '✓ مستخدم' : 'نشط') + '</span><span style="flex:1;font-weight:600;">' + c.code + '</span><span style="font-size:10px;">' + c.date + '</span><button class="btn btn-danger" onclick="codes.splice(' + idx + ',1);saveCodes();loadPage();">🗑️</button></div>';
+            }).join('');
+        }
+
+        function exportCSV() {
+            let csv = 'code,level,region,password,note,used,date\n';
+            codes.forEach(c => { csv += c.code + ',' + c.level + ',' + c.region + ',' + c.password + ',' + (c.note || '') + ',' + c.used + ',' + c.date + '\n'; });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'codes.csv'; a.click();
+            alert('✅ تم التصدير');
+        }
+
+        loadPage();
+    </script>
+</body>
+</html>

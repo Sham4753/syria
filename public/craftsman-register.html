@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#007A3D">
+    <title>تسجيل حرفي - سوريا الإلكترونية</title>
+    <style>
+        :root {
+            --primary: #007A3D; --primary-light: #00B359; --white: #FFFFFF;
+            --bg: #F0F4F0; --text: #1A1A1A; --text-secondary: #6C757D;
+            --glass-bg: rgba(255,255,255,0.7); --glass-shadow: 0 4px 16px rgba(0,0,0,0.06);
+            --radius: 14px; --radius-lg: 18px;
+            --font: 'Segoe UI', 'Noto Sans Arabic', Tahoma, sans-serif;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: var(--font); background: var(--bg);
+            color: var(--text); direction: rtl;
+            padding: 15px; max-width: 500px; margin: 0 auto;
+        }
+        a { text-decoration:none; color:inherit; }
+        .glass {
+            background: var(--glass-bg); backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.5); box-shadow: var(--glass-shadow);
+        }
+        .header {
+            display: flex; align-items: center; gap: 12px;
+            padding: 10px 0 20px;
+        }
+        .back-btn {
+            width: 40px; height: 40px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; font-weight: bold; cursor: pointer;
+        }
+        .page-title { font-size: 22px; font-weight: 700; }
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 14px; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 14px; border-radius: var(--radius);
+            border: 2px solid rgba(0,0,0,0.1); font-size: 14px; outline: none;
+            font-family: var(--font); background: var(--white);
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            border-color: var(--primary);
+        }
+        .submit-btn {
+            width: 100%; padding: 16px; background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white; border: none; border-radius: 16px; font-size: 17px; font-weight: 700;
+            cursor: pointer; margin-top: 10px;
+        }
+        .login-link { text-align: center; margin-top: 15px; font-size: 14px; color: var(--text-secondary); }
+        .login-link a { color: var(--primary); font-weight: 600; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <a href="/" class="back-btn glass">←</a>
+        <div class="page-title">🔨 تسجيل حرفي</div>
+    </div>
+
+    <div class="form-group">
+        <label>الاسم الكامل *</label>
+        <input type="text" id="name_ar" placeholder="مثلاً: أحمد العماري">
+    </div>
+
+    <div class="form-group">
+        <label>المهنة *</label>
+        <select id="trade">
+            <option value="">اختر المهنة</option>
+            <option value="دهان">🎨 دهان (بويا)</option>
+            <option value="بلاط">🧱 بلاط (سيراميك)</option>
+            <option value="كهربائي">⚡ كهربائي</option>
+            <option value="سمكري">🔧 سمكري (سباك)</option>
+            <option value="نجار">🪚 نجار</option>
+            <option value="حداد">🔩 حداد</option>
+            <option value="مبيض">🧹 مبيض (محارة)</option>
+            <option value="زجاج">🪟 زجّاج (ألمنيوم)</option>
+            <option value="تكييف">❄️ فني تكييف</option>
+            <option value="خياط">🧵 خياط</option>
+            <option value="اخر">🔨 حرفي آخر</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>رقم الجوال *</label>
+        <input type="tel" id="phone" placeholder="09xxxxxxxx">
+    </div>
+
+    <div class="form-group">
+        <label>رقم جوال إضافي</label>
+        <input type="tel" id="phone2" placeholder="اختياري">
+    </div>
+
+    <div class="form-group">
+        <label>مناطق التواجد</label>
+        <input type="text" id="regions" placeholder="مثلاً: دمشق - المزة، داريا، صحنايا">
+    </div>
+
+    <div class="form-group">
+        <label>وصف الخدمة</label>
+        <textarea id="description" rows="2" placeholder="اكتب وصفاً مختصراً عن خدماتك..."></textarea>
+    </div>
+
+    <button class="submit-btn" onclick="register()">🚀 تسجيل</button>
+
+    <div class="login-link">
+        <a href="/">← العودة للرئيسية</a>
+    </div>
+
+    <script>
+        async function register() {
+            const name_ar = document.getElementById('name_ar').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const trade = document.getElementById('trade').value;
+
+            if (!name_ar || !phone || !trade) {
+                alert('الرجاء ملء الحقول المطلوبة');
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/craftsmen/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name_ar,
+                        phone,
+                        phone2: document.getElementById('phone2').value.trim(),
+                        trade,
+                        description_ar: document.getElementById('description').value.trim(),
+                        regions: document.getElementById('regions').value.trim()
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert('✅ تم تسجيلك بنجاح! سيتم مراجعة طلبك.');
+                    window.location.href = '/';
+                } else {
+                    alert('❌ ' + (data.message || 'فشل التسجيل'));
+                }
+            } catch (e) {
+                alert('❌ خطأ في الاتصال');
+            }
+        }
+    </script>
+</body>
+</html>

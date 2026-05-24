@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#007A3D">
+    <title>لوحة التحكم - سوريا الإلكترونية</title>
+    <style>
+        :root {
+            --primary: #007A3D; --primary-light: #00B359; --white: #FFFFFF;
+            --bg: #F0F4F0; --text: #1A1A1A; --text-secondary: #6C757D;
+            --gold: #D4AF37; --red: #CE1126;
+            --glass-bg: rgba(255,255,255,0.7); --glass-shadow: 0 4px 16px rgba(0,0,0,0.06);
+            --shadow: 0 2px 8px rgba(0,0,0,0.06); --shadow-md: 0 4px 16px rgba(0,0,0,0.1);
+            --radius: 14px; --radius-lg: 18px;
+            --font: 'Segoe UI', 'Noto Sans Arabic', Tahoma, sans-serif;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: var(--font); background: var(--bg);
+            color: var(--text); direction: rtl;
+            padding: 15px; max-width: 500px; margin: 0 auto;
+        }
+        a { text-decoration:none; color:inherit; }
+        .glass {
+            background: var(--glass-bg); backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.5); box-shadow: var(--glass-shadow);
+        }
+        .header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 0 15px;
+        }
+        .page-title { font-size: 20px; font-weight: 700; }
+        .logout-btn {
+            padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 600;
+            background: #FEE2E2; color: var(--red); cursor: pointer;
+        }
+        .user-info {
+            padding: 16px; border-radius: var(--radius-lg); margin-bottom: 15px;
+            text-align: center;
+        }
+        .user-level {
+            display: inline-block; padding: 6px 16px; border-radius: 20px;
+            font-size: 12px; font-weight: 700; margin-bottom: 8px;
+        }
+        .user-level.super { background: #FEF3C7; color: #92400E; }
+        .user-level.governorate { background: #D1FAE5; color: #065F46; }
+        .user-level.business { background: #DBEAFE; color: #1E40AF; }
+        .stats { display: flex; gap: 8px; overflow-x: auto; padding: 5px 0 15px; scrollbar-width: none; }
+        .stat-card {
+            flex: 0 0 auto; padding: 14px 16px; border-radius: var(--radius-lg);
+            text-align: center; min-width: 90px;
+        }
+        .stat-num { font-size: 20px; font-weight: 700; color: var(--primary); }
+        .stat-lbl { font-size: 11px; color: var(--text-secondary); }
+        .section-title { font-size: 16px; font-weight: 700; margin: 0 0 10px 0; }
+        .action-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px; }
+        .action-btn {
+            padding: 10px 18px; border-radius: 20px; font-size: 13px; font-weight: 600;
+            cursor: pointer; transition: 0.2s; border: 2px solid var(--primary);
+            background: white; color: var(--primary);
+        }
+        .action-btn.primary { background: var(--primary); color: white; }
+        .action-btn:hover { transform: translateY(-2px); }
+        .list-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 14px; border-radius: var(--radius); margin-bottom: 8px;
+            transition: 0.2s;
+        }
+        .list-item:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+        .list-icon { font-size: 24px; }
+        .list-info { flex: 1; }
+        .list-info h4 { font-size: 14px; font-weight: 600; }
+        .list-info p { font-size: 11px; color: var(--text-secondary); }
+        .code-box {
+            padding: 16px; border-radius: var(--radius-lg); margin-bottom: 15px;
+            text-align: center; border: 2px dashed var(--primary);
+        }
+        .code-text {
+            font-size: 24px; font-weight: 800; color: var(--primary);
+            letter-spacing: 3px; margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="page-title">📊 لوحة التحكم</div>
+        <a href="/login.html" class="logout-btn" onclick="localStorage.clear()">🚪 خروج</a>
+    </div>
+
+    <div class="user-info glass" id="userInfo"></div>
+    <div class="stats" id="stats"></div>
+    <div class="action-btns" id="actionBtns"></div>
+    <div id="contentList"></div>
+    <div id="codeArea"></div>
+
+    <script>
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        const API = '/api';
+
+        function init() {
+            if (!user.role) {
+                document.body.innerHTML = '<div style="text-align:center;padding:50px;"><h3>❌ الرجاء تسجيل الدخول</h3><a href="/login.html">تسجيل الدخول</a></div>';
+                return;
+            }
+
+            const levelLabels = { super: '👑 الرئيس', governorate: '🏛️ محافظ', district: '🏙️ مدير منطقة', village: '🏡 مدير قرية', business_owner: '👤 صاحب منشأة' };
+            document.getElementById('userInfo').innerHTML = `
+                <span class="user-level ${user.role || 'business'}">${levelLabels[user.role] || '👤 مستخدم'}</span>
+                <h4>${user.full_name_ar || user.name_ar || 'مسؤول'}</h4>
+                <p style="color:var(--text-secondary);font-size:13px;">${user.phone || ''}</p>
+            `;
+
+            document.getElementById('stats').innerHTML = `
+                <div class="stat-card glass"><div class="stat-num" id="stat1">--</div><div class="stat-lbl">العناصر</div></div>
+                <div class="stat-card glass"><div class="stat-num" id="stat2">--</div><div class="stat-lbl">المنشآت</div></div>
+            `;
+
+            if (user.role === 'super') {
+                document.getElementById('actionBtns').innerHTML = `
+                    <button class="action-btn primary" onclick="generateCode('governorate')">🎫 كود محافظ</button>
+                    <button class="action-btn" onclick="viewAll('governorates')">🏛️ المحافظات</button>
+                `;
+                loadRegions(1);
+            } else if (user.role === 'business_owner') {
+                document.getElementById('actionBtns').innerHTML = `
+                    <button class="action-btn primary" onclick="window.location.href='/business-dash.html?id=${user.id}'">✏️ إدارة منشأتي</button>
+                `;
+                document.getElementById('contentList').innerHTML = '<p style="text-align:center;color:var(--text-secondary);padding:20px;">👤 أنت صاحب منشأة - استخدم لوحة تحكم المنشأة</p>';
+            } else {
+                document.getElementById('contentList').innerHTML = '<p style="text-align:center;color:var(--text-secondary);padding:20px;">🏛️ لوحة تحكم ' + (levelLabels[user.role] || 'المستخدم') + '</p>';
+            }
+        }
+
+        async function loadRegions(level) {
+            try {
+                const res = await fetch(`${API}/regions?admin_level_id=${level}`);
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('stat1').textContent = data.data.length;
+                    document.getElementById('contentList').innerHTML = data.data.slice(0, 10).map(r => `
+                        <div class="list-item glass">
+                            <div class="list-icon">🏛️</div>
+                            <div class="list-info"><h4>${r.name_ar}</h4><p>👥 ${(r.population/1000000).toFixed(1)}M نسمة</p></div>
+                            <span style="color:var(--primary);">←</span>
+                        </div>
+                    `).join('');
+                }
+            } catch (e) {}
+        }
+
+        function generateCode(level) {
+            const code = 'SYR-' + level.toUpperCase() + '-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+            document.getElementById('codeArea').innerHTML = `
+                <div class="code-box glass">
+                    <h4>🎫 كود ${level === 'governorate' ? 'محافظ' : 'مدير'} جديد</h4>
+                    <div class="code-text">${code}</div>
+                    <p style="color:var(--text-secondary);font-size:12px;">انسخ هذا الكود وأعطه للشخص المعني</p>
+                    <button class="action-btn primary" onclick="navigator.clipboard.writeText('${code}');alert('✅ تم النسخ')">📋 نسخ الكود</button>
+                </div>
+            `;
+        }
+
+        function viewAll(type) { alert('👁️ عرض كل ' + type); }
+
+        init();
+    </script>
+</body>
+</html>

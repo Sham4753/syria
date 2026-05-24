@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#007A3D"><title>لحظات - سوريا الإلكترونية</title>
+    <style>
+        :root { --primary: #007A3D; --primary-light: #00B359; --white: #FFFFFF; --bg: #F0F4F0; --text: #1A1A1A; --text-secondary: #6C757D; --red: #CE1126; --glass-bg: rgba(255,255,255,0.75); --glass-shadow: 0 4px 16px rgba(0,0,0,0.06); --radius: 14px; --radius-lg: 18px; --font: 'Segoe UI', 'Noto Sans Arabic', Tahoma, sans-serif; }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family: var(--font); background: var(--bg); color: var(--text); direction: rtl; padding: 15px; max-width: 520px; margin: 0 auto; padding-bottom: 100px; }
+        a { text-decoration:none; color:inherit; }
+        .glass { background: var(--glass-bg); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.5); box-shadow: var(--glass-shadow); border-radius: var(--radius); }
+        .header { display: flex; align-items: center; gap: 12px; padding: 10px 0 15px; }
+        .back-btn { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; cursor: pointer; }
+        .page-title { font-size: 20px; font-weight: 700; }
+        .post-box { padding: 14px; border-radius: var(--radius-lg); margin-bottom: 15px; }
+        .post-box textarea { width: 100%; border: none; outline: none; font-family: var(--font); font-size: 14px; resize: vertical; min-height: 60px; background: transparent; }
+        .post-box input[type="file"] { margin-top: 8px; }
+        .post-btn { padding: 10px 24px; background: var(--primary); color: white; border: none; border-radius: 20px; font-weight: 600; cursor: pointer; font-size: 14px; }
+        .moment-card { padding: 14px; border-radius: var(--radius-lg); margin-bottom: 12px; }
+        .moment-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+        .moment-avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+        .moment-name { font-weight: 700; font-size: 14px; } .moment-time { font-size: 11px; color: var(--text-secondary); }
+        .moment-text { font-size: 14px; margin-bottom: 8px; line-height: 1.6; }
+        .moment-image { width: 100%; border-radius: var(--radius); margin-top: 8px; max-height: 300px; object-fit: cover; }
+        .section-title { font-size: 16px; font-weight: 700; margin: 15px 0 10px 0; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="/" class="back-btn glass">←</a>
+        <div class="page-title">📸 لحظات</div>
+    </div>
+
+    <div class="post-box glass">
+        <textarea id="postText" placeholder="شارك لحظتك... 📸"></textarea>
+        <input type="file" id="postImage" accept="image/*" style="margin-top:6px;">
+        <button class="post-btn" onclick="addPost()" style="margin-top:8px;">نشر</button>
+    </div>
+
+    <div class="section-title">📋 آخر المنشورات</div>
+    <div id="momentsList"></div>
+
+    <script>
+        let posts = JSON.parse(localStorage.getItem('moments') || '[]');
+
+        function renderPosts() {
+            const container = document.getElementById('momentsList');
+            if (posts.length === 0) { container.innerHTML = '<p style="text-align:center;color:var(--text-secondary);">لا توجد منشورات. كن أول من يشارك! 📸</p>'; return; }
+            container.innerHTML = posts.slice().reverse().map((p, i) => `
+                <div class="moment-card glass">
+                    <div class="moment-header">
+                        <div class="moment-avatar">👤</div>
+                        <div><div class="moment-name">مستخدم</div><div class="moment-time">${p.time}</div></div>
+                    </div>
+                    ${p.text ? '<div class="moment-text">' + p.text + '</div>' : ''}
+                    ${p.image ? '<img src="' + p.image + '" class="moment-image">' : ''}
+                </div>
+            `).join('');
+        }
+
+        function addPost() {
+            const text = document.getElementById('postText').value.trim();
+            const file = document.getElementById('postImage').files[0];
+            if (!text && !file) return alert('اكتب شيئاً أو اختر صورة');
+            
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    posts.push({ text, image: e.target.result, time: new Date().toLocaleString() });
+                    localStorage.setItem('moments', JSON.stringify(posts));
+                    document.getElementById('postText').value = '';
+                    document.getElementById('postImage').value = '';
+                    renderPosts();
+                };
+                reader.readAsDataURL(file);
+            } else {
+                posts.push({ text, image: '', time: new Date().toLocaleString() });
+                localStorage.setItem('moments', JSON.stringify(posts));
+                document.getElementById('postText').value = '';
+                renderPosts();
+            }
+        }
+
+        renderPosts();
+    </script>
+</body>
+</html>

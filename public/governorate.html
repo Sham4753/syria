@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#007A3D">
+    <title>المحافظة - سوريا الإلكترونية</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <style>
+        :root {
+            --primary: #007A3D; --primary-light: #00B359; --white: #FFFFFF;
+            --bg: #F0F4F0; --text: #1A1A1A; --text-secondary: #6C757D;
+            --red: #CE1126; --gold: #D4AF37;
+            --glass-bg: rgba(255,255,255,0.75); --glass-shadow: 0 4px 16px rgba(0,0,0,0.06);
+            --shadow-md: 0 8px 24px rgba(0,0,0,0.12);
+            --radius: 14px; --radius-lg: 18px;
+            --transition: 0.3s ease;
+            --font: 'Segoe UI', 'Noto Sans Arabic', Tahoma, sans-serif;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: var(--font); background: var(--bg);
+            color: var(--text); direction: rtl;
+            padding: 15px; max-width: 520px; margin: 0 auto;
+            padding-bottom: 100px;
+        }
+        a { text-decoration:none; color:inherit; }
+        .glass {
+            background: var(--glass-bg); backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.5); box-shadow: var(--glass-shadow);
+            border-radius: var(--radius);
+        }
+        .header {
+            display: flex; align-items: center; gap: 12px;
+            padding: 10px 0 15px;
+        }
+        .back-btn {
+            width: 40px; height: 40px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; font-weight: bold; cursor: pointer;
+        }
+        .page-title { font-size: 22px; font-weight: 700; flex: 1; }
+        .search-box {
+            display: flex; padding: 4px; border-radius: 25px; margin-bottom: 14px;
+        }
+        .search-box input {
+            flex: 1; padding: 14px; font-size: 14px; border: none; outline: none;
+            background: transparent;
+        }
+        .search-box button {
+            padding: 12px 20px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white; border: none; border-radius: 22px;
+            font-size: 14px; font-weight: 600; cursor: pointer;
+        }
+        .filters {
+            display: flex; gap: 8px; overflow-x: auto; padding: 4px 0 14px;
+            scrollbar-width: none;
+        }
+        .filter-chip {
+            padding: 10px 18px; border-radius: 20px; font-size: 13px; font-weight: 600;
+            white-space: nowrap; cursor: pointer; transition: var(--transition);
+            border: 2px solid transparent;
+        }
+        .filter-chip.active {
+            background: var(--primary); color: white; border-color: var(--primary);
+        }
+        .map-container {
+            height: 300px; border-radius: var(--radius-lg); overflow: hidden;
+            margin-bottom: 16px; box-shadow: var(--shadow-md);
+        }
+        .section-title { font-size: 16px; font-weight: 700; margin: 0 0 10px 0; }
+        .list-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 14px; border-radius: var(--radius); margin-bottom: 8px;
+            transition: var(--transition); cursor: pointer;
+        }
+        .list-item:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+        .list-icon {
+            width: 50px; height: 50px; border-radius: var(--radius);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px; flex-shrink: 0;
+            background: linear-gradient(135deg, var(--gold), #F0D78C);
+            color: white;
+        }
+        .list-info { flex: 1; }
+        .list-info h4 { font-size: 15px; font-weight: 600; }
+        .list-info p { font-size: 12px; color: var(--text-secondary); }
+        .list-rating { color: var(--gold); font-weight: 700; font-size: 14px; }
+        .loading { text-align: center; padding: 30px; color: var(--text-secondary); }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <a href="/" class="back-btn glass">←</a>
+        <div class="page-title" id="govName">تحميل...</div>
+    </div>
+
+    <div class="search-box glass">
+        <input type="text" id="localSearch" placeholder="ابحث في المحافظة...">
+        <button onclick="searchLocal()">بحث</button>
+    </div>
+
+    <div class="filters" id="filters">
+        <span class="filter-chip glass active" data-filter="all" onclick="filter('all', this)">الكل</span>
+        <span class="filter-chip glass" data-filter="1" onclick="filter('1', this)">🍽️ مطاعم</span>
+        <span class="filter-chip glass" data-filter="11" onclick="filter('11', this)">🏥 مشافي</span>
+        <span class="filter-chip glass" data-filter="12" onclick="filter('12', this)">💊 صيدليات</span>
+    </div>
+
+    <div class="map-container" id="map"></div>
+
+    <div class="section-title">📋 المنشآت</div>
+    <div id="businessesList"><div class="loading">⏳ جاري التحميل...</div></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const API = '/api';
+        const params = new URLSearchParams(window.location.search);
+        const govId = params.get('id');
+        let map, markersGroup, currentFilter = 'all', allBusinesses = [];
+
+        async function load() {
+            if (!govId) return;
+            try {
+                const regionRes = await fetch(API + '/regions/' + govId);
+                const regionData = await regionRes.json();
+                if (regionData.success) {
+                    document.getElementById('govName').textContent = regionData.data.name_ar;
+                    document.title = regionData.data.name_ar + ' - سوريا الإلكترونية';
+                }
+                loadBusinesses();
+                initMap();
+            } catch(e) { console.error(e); }
+        }
+
+        async function loadBusinesses(searchQuery) {
+            let url = API + '/businesses?region_id=' + govId + '&limit=50';
+            if (currentFilter !== 'all') url += '&sub_category_id=' + currentFilter;
+            if (searchQuery) url += '&search=' + encodeURIComponent(searchQuery);
+            const res = await fetch(url); const data = await res.json();
+            if (data.success) {
+                allBusinesses = data.data;
+                renderList();
+                renderMarkers();
+            }
+        }
+
+        function renderList() {
+            const container = document.getElementById('businessesList');
+            if (allBusinesses.length === 0) {
+                container.innerHTML = '<p style="text-align:center;color:var(--text-secondary);padding:20px;">لا توجد منشآت</p>';
+                return;
+            }
+            container.innerHTML = allBusinesses.map(b => `
+                <a href="/business.html?id=${b.id}" class="list-item glass">
+                    <div class="list-icon" style="background:linear-gradient(135deg,#FF6B6B,#FF8E53);">${b.logo ? '<img src="'+b.logo+'" style="width:100%;height:100%;object-fit:cover;border-radius:14px;">' : '🏪'}</div>
+                    <div class="list-info"><h4>${b.name_ar}</h4><p>📞 ${b.phone || 'لا يوجد'}</p></div>
+                    <div class="list-rating">⭐ ${(b.average_rating || 0).toFixed(1)}</div>
+                </a>
+            `).join('');
+        }
+
+function initMap() {
+    setTimeout(() => {
+        map = L.map('map').setView([33.51, 36.27], 12);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution: '', maxZoom: 18}).addTo(map);
+        markersGroup = L.layerGroup().addTo(map);
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(pos) {
+                var userIcon = L.divIcon({
+                    html: '<div style="background:#007A3D;width:18px;height:18px;border-radius:50%;border:3px solid white;box-shadow:0 0 16px rgba(0,122,61,0.6);"></div>',
+                    iconSize: [18, 18], className: ''
+                });
+                L.marker([pos.coords.latitude, pos.coords.longitude], {icon: userIcon})
+                    .addTo(map).bindPopup('📍 أنت هنا').openPopup();
+                map.setView([pos.coords.latitude, pos.coords.longitude], 13);
+                renderMarkers();
+            }, function() { renderMarkers(); });
+        } else { renderMarkers(); }
+    }, 400);
+}
+        function renderMarkers() {
+            if (!markersGroup) return;
+            markersGroup.clearLayers();
+            allBusinesses.forEach(b => {
+                if (b.latitude && b.longitude) {
+                    L.marker([b.latitude, b.longitude])
+                        .addTo(markersGroup)
+                        .bindPopup('<a href="/business.html?id=' + b.id + '">' + b.name_ar + '</a>');
+                }
+            });
+            if (allBusinesses.length > 0 && allBusinesses[0].latitude) {
+                map.setView([allBusinesses[0].latitude, allBusinesses[0].longitude], 13);
+            }
+        }
+
+        function filter(filter, el) {
+            currentFilter = filter;
+            document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+            loadBusinesses();
+        }
+
+        function searchLocal() {
+            const q = document.getElementById('localSearch').value.trim();
+            loadBusinesses(q);
+        }
+
+        load();
+    </script>
+</body>
+</html>
