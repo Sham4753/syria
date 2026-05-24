@@ -6,11 +6,10 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // ========== قاعدة البيانات (sql.js) ==========
-let db;
-const initSqlJs = require('sql.js');
 const fs = require('fs');
+const initSqlJs = require('sql.js');
 const dbPath = path.join(__dirname, 'database', 'syria.db');
-let saveTimeout;
+let db, saveTimeout;
 
 function all(sql, params = []) {
     const stmt = db.prepare(sql); stmt.bind(params);
@@ -30,6 +29,13 @@ function run(sql, params = []) {
 }
 function saveNow() { fs.writeFileSync(dbPath, Buffer.from(db.export())); }
 
+(async function initDB() {
+    const SQL = await initSqlJs();
+    const filebuffer = fs.readFileSync(dbPath);
+    db = new SQL.Database(filebuffer);
+    db.run('PRAGMA foreign_keys = ON');
+    console.log('✅ Database loaded');
+})();
 // تحميل قاعدة البيانات عند بدء السيرفر
 (async function initDB() {
     const SQL = await initSqlJs();
