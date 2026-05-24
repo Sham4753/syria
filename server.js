@@ -5,45 +5,23 @@ const crypto = require('crypto');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// ========== قاعدة البيانات (sql.js) ==========
-const fs = require('fs');
-const initSqlJs = require('sql.js');
+// ========== قاعدة البيانات (better-sqlite3) ==========
+const Database = require('better-sqlite3');
 const dbPath = path.join(__dirname, 'database', 'syria.db');
-let db, saveTimeout;
+const db = new Database(dbPath);
+db.pragma('journal_mode = WAL');
+db.pragma('foreign_keys = ON');
 
 function all(sql, params = []) {
-    const stmt = db.prepare(sql); stmt.bind(params);
-    const results = [];
-    while (stmt.step()) results.push(stmt.getAsObject());
-    stmt.free(); return results;
+    return db.prepare(sql).all(...params);
 }
 function get(sql, params = []) {
-    const stmt = db.prepare(sql); stmt.bind(params);
-    const row = stmt.step() ? stmt.getAsObject() : null;
-    stmt.free(); return row;
+    return db.prepare(sql).get(...params);
 }
 function run(sql, params = []) {
-    db.run(sql, params);
-    clearTimeout(saveTimeout);
-    saveTimeout = setTimeout(() => fs.writeFileSync(dbPath, Buffer.from(db.export())), 300);
+    db.prepare(sql).run(...params);
 }
-function saveNow() { fs.writeFileSync(dbPath, Buffer.from(db.export())); }
-
-(async function initDB() {
-    const SQL = await initSqlJs();
-    const filebuffer = fs.readFileSync(dbPath);
-    db = new SQL.Database(filebuffer);
-    db.run('PRAGMA foreign_keys = ON');
-    console.log('✅ Database loaded');
-})();
-// تحميل قاعدة البيانات عند بدء السيرفر
-(async function initDB() {
-    const SQL = await initSqlJs();
-    const filebuffer = fs.readFileSync(dbPath);
-    db = new SQL.Database(filebuffer);
-    db.run('PRAGMA foreign_keys = ON');
-    console.log('✅ Database loaded');
-})();
+function saveNow() {}
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public'), {
     setHeaders: (res) => { res.set('Cache-Control', 'no-store'); }
