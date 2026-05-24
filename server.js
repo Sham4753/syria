@@ -5,23 +5,34 @@ const crypto = require('crypto');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// ========== قاعدة البيانات (better-sqlite3) ==========
-const Database = require('better-sqlite3');
+// ========== قاعدة البيانات (sql.js) ==========
+const initSqlJs = require('sql.js');
+const fs = require('fs');
 const dbPath = path.join(__dirname, 'database', 'syria.db');
-const db = new Database(dbPath);
-db.pragma('journal_mode = WAL');
-db.pragma('foreign_keys = ON');
+let db, saveTimeout;
 
 function all(sql, params = []) {
-    return db.prepare(sql).all(...params);
+    const stmt = db.prepare(sql); stmt.bind(params);
+    const results = [];
+    while (stmt.step()) results.push(stmt.getAsObject());
+    stmt.free(); return results;
 }
+
 function get(sql, params = []) {
-    return db.prepare(sql).get(...params);
+    const stmt = db.prepare(sql); stmt.bind(params);
+    const row = stmt.step() ? stmt.getAsObject() : null;
+    stmt.free(); return row;
 }
+
 function run(sql, params = []) {
-    db.prepare(sql).run(...params);
+    db.run(sql, params);
+    clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(() => fs.writeFileSync(dbPath, Buffer.from(db.export())), 300);
 }
-function saveNow() {}
+
+function saveNow() { fs.writeFileSync(dbPath, Buffer.from(db.export())); }
+
+// ========== Middleware ==========
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public'), {
     setHeaders: (res) => { res.set('Cache-Control', 'no-store'); }
@@ -197,8 +208,6 @@ app.get('/api/stats', (req, res) => {
     db.run('PRAGMA foreign_keys = ON');
     console.log('✅ Database loaded');
 
-console.log('Database path:', dbPath);
-console.log('Database exists:', fs.existsSync(dbPath));
     app.listen(PORT, '0.0.0.0', () => {
         console.log(`🚀 Server: http://0.0.0.0:${PORT}`);
         console.log(`🇸🇾 Syria Platform v7.0 LIVE!`);
