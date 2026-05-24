@@ -208,6 +208,8 @@ app.get('/api/stats', (req, res) => {
     db.run('PRAGMA foreign_keys = ON');
     console.log('✅ Database loaded');
 
+console.log('Database path:', dbPath);
+console.log('Database exists:', fs.existsSync(dbPath));
     app.listen(PORT, '0.0.0.0', () => {
         console.log(`🚀 Server: http://0.0.0.0:${PORT}`);
         console.log(`🇸🇾 Syria Platform v7.0 LIVE!`);
