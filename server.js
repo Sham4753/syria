@@ -6,32 +6,16 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // ========== قاعدة البيانات (sql.js) ==========
-const initSqlJs = require('sql.js');
-const fs = require('fs');
+const Database = require('better-sqlite3');
 const dbPath = path.join(__dirname, 'database', 'syria.db');
-let db, saveTimeout;
+const db = new Database(dbPath);
+db.pragma('journal_mode = WAL');
+db.pragma('foreign_keys = ON');
 
-function all(sql, params = []) {
-    const stmt = db.prepare(sql); stmt.bind(params);
-    const results = [];
-    while (stmt.step()) results.push(stmt.getAsObject());
-    stmt.free(); return results;
-}
-
-function get(sql, params = []) {
-    const stmt = db.prepare(sql); stmt.bind(params);
-    const row = stmt.step() ? stmt.getAsObject() : null;
-    stmt.free(); return row;
-}
-
-function run(sql, params = []) {
-    db.run(sql, params);
-    clearTimeout(saveTimeout);
-    saveTimeout = setTimeout(() => fs.writeFileSync(dbPath, Buffer.from(db.export())), 300);
-}
-
-function saveNow() { fs.writeFileSync(dbPath, Buffer.from(db.export())); }
-
+function all(sql, params = []) { return db.prepare(sql).all(...params); }
+function get(sql, params = []) { return db.prepare(sql).get(...params); }
+function run(sql, params = []) { db.prepare(sql).run(...params); }
+function saveNow() {}
 // ========== Middleware ==========
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public'), {
